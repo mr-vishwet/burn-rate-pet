@@ -1,8 +1,8 @@
-import 'constants.dart';
-
 /// Human-readable formatting for money and dates used across the Momo UI.
 /// Money is stored in minor units (cents) and formatted here.
 library;
+
+import 'constants.dart';
 
 /// Formats [cents] as "$1,936" / "€1,936" — whole units, thousands
 /// separated, no decimals (amounts in Momo are whole-dollar by design).

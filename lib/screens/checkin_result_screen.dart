@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
+import '../engine/happiness.dart';
 import '../state/momo_scope.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/formula_card.dart';
