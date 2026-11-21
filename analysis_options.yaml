@@ -1,0 +1,10 @@
+# Momo lint rules: the recommended Flutter set, plus the two rules that
+# matter most for a state-driven app — no unused imports and no public API
+# without docs on the engine surface.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - public_member_api_docs

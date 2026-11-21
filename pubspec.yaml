@@ -1,0 +1,31 @@
+name: momo
+description: Momo — a happiness companion. One Happiness Index (0-100) from three inputs: mood check-ins (40%), daily routines (35%), and budget health (25%). Local-first, guest-first, no account needed.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+  flutter: '>=3.27.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Logo assets are SVG (icon, lockups, app-icon tile).
+  flutter_svg: ^2.0.10+1
+  # Inter (body), Space Grotesk (display), JetBrains Mono (numbers) —
+  # the typefaces of the V7 design.
+  google_fonts: ^6.2.1
+  # Local-first persistence: the whole app state is one JSON document.
+  shared_preferences: ^2.3.3
+  # App documents directory for the JSON export on native platforms.
+  path_provider: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logos/
