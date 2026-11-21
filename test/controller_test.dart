@@ -130,8 +130,8 @@ void main() {
       final decoded = jsonDecode(controller.exportJson());
       expect(decoded, isA<Map<String, dynamic>>());
       expect(decoded['petName'], 'Momo');
-      expect(decoded['categories'], isA<List>());
-      expect(decoded['checkins'], isA<List>());
+      expect(decoded['categories'], isA<List<dynamic>>());
+      expect(decoded['checkins'], isA<List<dynamic>>());
     });
   });
 }
