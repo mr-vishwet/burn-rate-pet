@@ -14,7 +14,11 @@ library;
 /// Weights of the three inputs. They sum to 1.0 and are shown in the UI
 /// next to the formula — the formula is never hidden.
 const double kMoodWeight = 0.40;
+
+/// Weight of the routine component (35%).
 const double kRoutineWeight = 0.35;
+
+/// Weight of the budget component (25%).
 const double kBudgetWeight = 0.25;
 
 /// Check-in questions per session: 10, drawn at random (shuffled) from the
@@ -37,7 +41,11 @@ const int kRoutineWindowDays = 30;
 /// Band boundaries (inclusive lower bounds): Thriving 80-100, Content
 /// 60-79, Low 40-59, Struggling below 40.
 const int kThrivingMin = 80;
+
+/// Content band starts at 60 (60-79).
 const int kContentMin = 60;
+
+/// Low band starts at 40 (40-59).
 const int kLowMin = 40;
 
 /// ---------------------------------------------------------------------------
@@ -48,7 +56,11 @@ const int kLowMin = 40;
 /// past 35% of the monthly plan, plus a flat penalty per category that has
 /// gone over its plan. See [BudgetScore] in `engine/budget.dart`.
 const double kBudgetFreeUtilization = 0.35;
+
+/// Points lost per unit of utilization past the free threshold.
 const double kBudgetSlope = 48.0;
+
+/// Flat penalty per category that has gone over its plan.
 const int kBudgetOverCategoryPenalty = 15;
 
 /// ---------------------------------------------------------------------------
@@ -67,8 +79,14 @@ const int kBudgetOverCategoryPenalty = 15;
 class DemoFixture {
   /// Seeded component scores (0-100).
   static const int moodScore = 76;
+
+  /// Seeded routine component score (0-100).
   static const int routineScore = 72;
+
+  /// Seeded budget component score (0-100).
   static const int budgetScore = 78;
+
+  /// Seeded Happiness Index (0-100).
   static const int index = 75;
 
   /// Seeded check-in scores for the last 7 days — they average exactly 76.
@@ -76,8 +94,14 @@ class DemoFixture {
 
   /// Monthly budget in cents, and the five categories (name, planned, spent).
   static const int monthlyPlannedCents = 240000;
+
+  /// Seeded total spent this month, in cents.
   static const int monthlySpentCents = 193600;
+
+  /// Seeded total spent last month, in cents.
   static const int lastMonthSpentCents = 210400; // this month is 8% lower
+
+  /// Seeded budget categories: (name, planned cents, spent cents).
   static const List<(String, int, int)> categories = [
     ('Food', 52000, 38600),
     ('Transport', 18000, 14200),

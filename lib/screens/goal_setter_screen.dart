@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../core/format.dart';
@@ -207,7 +207,7 @@ class _GoalSetterScreenState extends State<GoalSetterScreen> {
                   happinessGoal: _happinessGoal.round(),
                   monthlyBudgetGoalCents: budgetGoal,
                 );
-                if (!mounted) return;
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Goals saved. Momo is rooting for you.'),

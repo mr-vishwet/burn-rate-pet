@@ -493,7 +493,7 @@ class MomoController extends ChangeNotifier {
   /// Full share URL, e.g. "momo.app/s/7f3k9q".
   String? get shareUrl {
     final code = state.shareCode;
-    return code == null ? null : '${kShareHost}/s/$code';
+    return code == null ? null : '$kShareHost/s/$code';
   }
 
   String _generateShareCode() {

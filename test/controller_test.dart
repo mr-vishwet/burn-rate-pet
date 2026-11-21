@@ -127,7 +127,8 @@ void main() {
     });
 
     test('export is valid JSON with the full state', () {
-      final decoded = jsonDecode(controller.exportJson());
+      final decoded =
+          jsonDecode(controller.exportJson()) as Map<String, dynamic>;
       expect(decoded, isA<Map<String, dynamic>>());
       expect(decoded['petName'], 'Momo');
       expect(decoded['categories'], isA<List<dynamic>>());

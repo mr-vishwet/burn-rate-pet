@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Momo theme — the V7 animated-essence palette.
@@ -12,30 +12,62 @@ class AppTheme {
   AppTheme._();
 
   // Cocoa background ramp (dark first — the V7 screens were designed dark).
+  /// Deepest cocoa — the top of the background gradient.
   static const Color cocoa900 = Color(0xFF2B2118);
+
+  /// Mid cocoa — card surfaces and the middle of the background gradient.
   static const Color cocoa800 = Color(0xFF3B2A20);
+
+  /// Lighter cocoa — the bottom of the background gradient.
   static const Color cocoa700 = Color(0xFF4A3428);
+
+  /// Lightest cocoa — raised surfaces.
   static const Color cocoa600 = Color(0xFF5C4233);
 
   // Ink + text.
+  /// Primary text (white).
   static const Color ink = Color(0xFFFFFFFF);
-  static const Color peachSoft = Color(0xFFFFD9C7); // secondary text
-  static const Color taupe = Color(0xFFD8A48F); // muted text
-  static const Color cocoaInk = Color(0xFF2B2118); // text on light chips
+
+  /// Secondary text — soft peach.
+  static const Color peachSoft = Color(0xFFFFD9C7);
+
+  /// Muted text.
+  static const Color taupe = Color(0xFFD8A48F);
+
+  /// Text on light chips.
+  static const Color cocoaInk = Color(0xFF2B2118);
 
   // Accents.
-  static const Color coral = Color(0xFFF26B4F); // CTA start
-  static const Color peach = Color(0xFFFFB59E); // CTA end
-  static const Color orange = Color(0xFFF59E0B); // Momo's accent
+  /// CTA gradient start.
+  static const Color coral = Color(0xFFF26B4F);
+
+  /// CTA gradient end.
+  static const Color peach = Color(0xFFFFB59E);
+
+  /// Momo's accent.
+  static const Color orange = Color(0xFFF59E0B);
+
+  /// Success / positive.
   static const Color green = Color(0xFF34D399);
+
+  /// Warning / negative.
   static const Color rose = Color(0xFFFB7185);
+
+  /// Highlight / streak.
   static const Color amber = Color(0xFFFB923C);
 
   // Glass.
-  static const Color glass = Color(0x14FFFFFF); // white 8%
-  static const Color glassStrong = Color(0x1FFFFFFF); // white 12%
-  static const Color hairline = Color(0x26FFFFFF); // white 15%
-  static const Color hairlineStrong = Color(0x40FFFFFF); // white 25%
+  /// Glass card fill — white 8%.
+  static const Color glass = Color(0x14FFFFFF);
+
+  /// Stronger glass fill — white 12%.
+  static const Color glassStrong = Color(0x1FFFFFFF);
+
+  /// Hairline border — white 15%.
+  static const Color hairline = Color(0x26FFFFFF);
+
+  /// Strong hairline border — white 25%.
+  static const Color hairlineStrong = Color(0x40FFFFFF);
 
   /// The coral → peach CTA gradient.
   static const LinearGradient ctaGradient = LinearGradient(
@@ -53,7 +85,7 @@ class AppTheme {
 
   /// The single phase-1 theme (V7 palette).
   static ThemeData get theme {
-    final scheme = ColorScheme.dark(
+    const scheme = ColorScheme.dark(
       primary: coral,
       onPrimary: cocoa900,
       secondary: peach,

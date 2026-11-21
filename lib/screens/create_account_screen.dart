@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -116,7 +116,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   email: _emailController.text,
                   name: _nameController.text,
                 );
-                if (!mounted) return;
+                if (!context.mounted) return;
                 Navigator.of(context).pushNamed(AppRoutes.verify);
               },
             ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/format.dart';
@@ -169,7 +169,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const Kicker('Explore'),
             const SizedBox(height: 12),
-            Wrap(
+            const Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [

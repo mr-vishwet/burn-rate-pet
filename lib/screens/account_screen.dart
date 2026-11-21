@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -112,15 +112,15 @@ class AccountScreen extends StatelessWidget {
                     onChanged: (value) => controller.setSync(value),
                   ),
                   const Divider(color: AppTheme.hairline),
-                  ListTile(
+                  const ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.phone_android_outlined,
                       color: AppTheme.peach,
                     ),
-                    title: const Text('This device'),
-                    subtitle: const Text('Synced · just now'),
-                    trailing: const Icon(
+                    title: Text('This device'),
+                    subtitle: Text('Synced · just now'),
+                    trailing: Icon(
                       Icons.check_circle,
                       color: AppTheme.green,
                     ),

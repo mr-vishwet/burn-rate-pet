@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../core/format.dart';
@@ -282,7 +282,7 @@ class BudgetScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: categoryId,
+              initialValue: categoryId,
               decoration: const InputDecoration(labelText: 'Category'),
               items: [
                 for (final c in categories)
@@ -387,6 +387,7 @@ class BudgetScreen extends StatelessWidget {
   }
 
   Future<void> _showAddCategory(BuildContext context) async {
+    final controller = MomoScope.read(context);
     final nameController = TextEditingController();
     final planController = TextEditingController(text: '100');
     final result = await showDialog<bool>(
@@ -430,7 +431,7 @@ class BudgetScreen extends StatelessWidget {
     );
     final planned = int.tryParse(planController.text.trim()) ?? 0;
     if (result == true && nameController.text.trim().isNotEmpty) {
-      await MomoScope.read(context).addCategory(
+      await controller.addCategory(
         name: nameController.text.trim(),
         plannedCents: planned * 100,
       );

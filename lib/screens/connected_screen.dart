@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../app_routes.dart';
@@ -129,15 +129,15 @@ class ConnectedScreen extends StatelessWidget {
                 children: [
                   const Kicker('Devices'),
                   const SizedBox(height: 8),
-                  ListTile(
+                  const ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.phone_android_outlined,
                       color: AppTheme.peach,
                     ),
-                    title: const Text('This device'),
-                    subtitle: const Text('Synced · just now'),
-                    trailing: const Icon(
+                    title: Text('This device'),
+                    subtitle: Text('Synced · just now'),
+                    trailing: Icon(
                       Icons.check_circle,
                       color: AppTheme.green,
                     ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/format.dart';
@@ -124,6 +124,7 @@ class RoutinesScreen extends StatelessWidget {
   }
 
   Future<void> _showAddRoutine(BuildContext context) async {
+    final controller = MomoScope.read(context);
     final nameController = TextEditingController();
     final timeController = TextEditingController(text: '8:00 AM');
     final result = await showDialog<bool>(
@@ -164,7 +165,7 @@ class RoutinesScreen extends StatelessWidget {
       ),
     );
     if (result == true && nameController.text.trim().isNotEmpty) {
-      await MomoScope.read(context).addRoutine(
+      await controller.addRoutine(
         name: nameController.text.trim(),
         timeLabel: timeController.text.trim(),
       );

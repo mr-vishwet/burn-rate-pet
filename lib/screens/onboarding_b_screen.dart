@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -48,7 +48,7 @@ class OnboardingBScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            _InputRow(
+            const _InputRow(
               icon: Icons.favorite_outline,
               title: 'Mood check-ins',
               weight: '40%',
@@ -56,7 +56,7 @@ class OnboardingBScreen extends StatelessWidget {
                   'stress, focus, and six more.',
             ),
             const SizedBox(height: 12),
-            _InputRow(
+            const _InputRow(
               icon: Icons.check_circle_outline,
               title: 'Daily routines',
               weight: '35%',
@@ -64,7 +64,7 @@ class OnboardingBScreen extends StatelessWidget {
                   'pause, they never punish.',
             ),
             const SizedBox(height: 12),
-            _InputRow(
+            const _InputRow(
               icon: Icons.account_balance_wallet_outlined,
               title: 'Budget health',
               weight: '25%',

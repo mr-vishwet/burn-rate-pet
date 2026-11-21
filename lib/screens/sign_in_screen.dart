@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -106,7 +106,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 await MomoScope.read(
                   context,
                 ).beginSignIn(_emailController.text);
-                if (!mounted) return;
+                if (!context.mounted) return;
                 Navigator.of(context).pushNamed(AppRoutes.verify);
               },
             ),

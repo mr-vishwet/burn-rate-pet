@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -42,37 +42,37 @@ class GuestModeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            GlassCard(
+            const GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Kicker('Works as a guest'),
-                  const SizedBox(height: 12),
+                  Kicker('Works as a guest'),
+                  SizedBox(height: 12),
                   _GuestRow(
                     icon: Icons.check_circle,
                     iconColor: AppTheme.green,
                     title: 'Mood check-ins',
                     body: '10 questions, any time.',
                   ),
-                  const _GuestRow(
+                  _GuestRow(
                     icon: Icons.check_circle,
                     iconColor: AppTheme.green,
                     title: 'Routines & streaks',
                     body: 'Create, keep, pause kindly.',
                   ),
-                  const _GuestRow(
+                  _GuestRow(
                     icon: Icons.check_circle,
                     iconColor: AppTheme.green,
                     title: 'Budget tracker & simulator',
                     body: 'Plans, expenses, what-ifs.',
                   ),
-                  const _GuestRow(
+                  _GuestRow(
                     icon: Icons.check_circle,
                     iconColor: AppTheme.green,
                     title: 'History, bands, insights, milestones',
                     body: 'Your whole story, on-device.',
                   ),
-                  const _GuestRow(
+                  _GuestRow(
                     icon: Icons.check_circle,
                     iconColor: AppTheme.green,
                     title: 'Bubble, widget, lock-screen check-ins',

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -85,22 +85,22 @@ class UpgradePromptScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            GlassCard(
+            const GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Kicker('With an account you also get'),
-                  const SizedBox(height: 8),
+                  Kicker('With an account you also get'),
+                  SizedBox(height: 8),
                   _UpgradeRow(
                     icon: Icons.sync_outlined,
                     text: 'Sync across devices',
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   _UpgradeRow(
                     icon: Icons.link_outlined,
                     text: 'Your read-only share link, revocable any time',
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   _UpgradeRow(
                     icon: Icons.backup_outlined,
                     text: 'Backup — your pet survives a lost phone',

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
@@ -75,14 +75,14 @@ class LockScreenScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _LockNotification(
+                  const _LockNotification(
                     mood: MomoMood.content,
                     title: 'Quick check-in: how\'s your focus?',
                     body: 'Tap to answer in 10 seconds — Momo is listening.',
                     when: 'now',
                   ),
                   const SizedBox(height: 12),
-                  _LockNotification(
+                  const _LockNotification(
                     mood: MomoMood.happy,
                     title: 'Your budget is looking better!',
                     body: 'Keep it up — Momo noticed.',

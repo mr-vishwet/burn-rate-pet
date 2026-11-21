@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/format.dart';
@@ -200,6 +200,7 @@ class RoutineDetailScreen extends StatelessWidget {
   }
 
   Future<void> _rename(BuildContext context, Routine routine) async {
+    final controller = MomoScope.read(context);
     final nameController = TextEditingController(text: routine.name);
     final result = await showDialog<bool>(
       context: context,
@@ -223,7 +224,7 @@ class RoutineDetailScreen extends StatelessWidget {
       ),
     );
     if (result == true && nameController.text.trim().isNotEmpty) {
-      await MomoScope.read(context).renameRoutine(
+      await controller.renameRoutine(
         routine.id,
         nameController.text.trim(),
       );

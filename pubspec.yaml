@@ -20,6 +20,12 @@ dependencies:
   # App documents directory for the JSON export on native platforms.
   path_provider: ^2.1.4
 
+  # Material Design widgets (package:flutter/material.dart is deprecated
+  # since Flutter 3.47 in favour of this package).
+  material_ui: ^1.11.1
+  # Browser APIs for the web JSON export (replaces dart:html).
+  web: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
