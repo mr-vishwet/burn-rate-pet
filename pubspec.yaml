@@ -1,5 +1,5 @@
 name: momo
-description: Momo — a happiness companion. One Happiness Index (0-100) from three inputs: mood check-ins (40%), daily routines (35%), and budget health (25%). Local-first, guest-first, no account needed.
+description: "Momo — a happiness companion. One Happiness Index (0-100) from three inputs: mood check-ins (40%), daily routines (35%), and budget health (25%). Local-first, guest-first, no account needed."
 publish_to: 'none'
 version: 0.1.0+1
 
