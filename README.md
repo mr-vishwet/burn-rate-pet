@@ -1,238 +1,87 @@
-# Momo — a happiness companion
+<p align="center">
+  <img src="docs/screenshots/app-icon.png" alt="Momo app icon — a small corgi face" width="96">
+</p>
 
-**One Happiness Index (0–100) from three inputs you can see: mood
-check-ins (40%), daily routines (35%), and budget health (25%).** The
-formula is shown in the UI, never hidden. Momo is a small corgi who lives
-on your phone — a floating bubble, a home-screen widget, lock-screen
-check-ins — and notices how you are doing, kindly, never guilt-trippy.
+<h1 align="center">Momo</h1>
 
-> **v0.1 — started, not finished.** All 30 screens exist as functional
-> routes (mobile + web presentations from one codebase), the index math is
-> real and tested, and everything persists locally. Sign-in is local-only
-> (no backend yet) and the native widget / lock-screen extension /
-> system-level bubble are phase-2 work — each screen says so plainly.
-> See [Honest limits](#honest-limits) and [Roadmap](#roadmap).
+<p align="center"><strong>The pet that knows how you feel.</strong></p>
+
+<p align="center">A happiness companion that turns how you're doing — your mood, your routines, your money — into one honest number, and a small corgi who lives on your phone and notices, kindly.</p>
+
+<p align="center"><a href="https://mr-vishwet.github.io/burn-rate-pet/"><strong>Try the live demo →</strong></a></p>
+
+---
+
+## The idea
+
+Most wellness apps either nag you or reduce you to a streak. Momo starts from a different question: **how are you actually doing, all things considered?**
+
+Your mood on a given day isn't one thing. It's how you slept, how stressed you are, whether you moved, whether you talked to anyone — and whether the small routines you set for yourself are holding, and whether money is quietly worrying you. Each of those is easy to feel and hard to see. Momo makes them visible, together, in one place.
+
+The insight is that a single number only helps if you can see exactly what made it. So Momo's **Happiness Index (0–100)** is built from three inputs you can always inspect, with the formula shown in the open, never hidden:
+
+```
+Happiness Index = mood × 40% + routines × 35% + budget × 25%
+```
+
+And the number isn't even the point — the **band** is. Momo reacts to which band you're in: **Thriving** (80–100), **Content** (60–79), **Low** (40–59), or **Struggling** (below 40). The pet's mood follows your band, so the app feels like a companion noticing how you are, not a dashboard grading you.
+
+The companion matters as much as the math. Momo is a small corgi who lives on your phone — a floating bubble you can tap any time, a home-screen widget, lock-screen check-ins — so the check-in finds you where you already are, instead of asking you to open yet another app and remember to be mindful.
+
+And Momo never punishes. A missed routine pauses your streak; it doesn't reset it to zero. A low week is met with gentler prompts, not red warnings. The goal isn't a perfect score — it's noticing, early, when something is slipping, while it's still easy to nudge back.
 
 ## What it does
 
-1. **Mood check-in** — 10 questions drawn at random from a bank of 10
-   dimensions (sleep, energy, stress, focus, social, movement, mood,
-   appetite, calm, outlook). Five answers each, scored 0–4. The mood
-   component is the average of your recent check-ins.
-2. **Daily routines** — routines you create (wake time, workout, deep
-   work, reading, …), followed or missed. The routine component is the
-   completion rate over the last 30 days. Streaks **pause, they don't
-   punish**: a missed day freezes the streak; the next completed day
-   resumes from the frozen value.
-3. **Budget planner/tracker** — one monthly plan across spending
-   categories, spent vs planned per category, plus a simulator that runs
-   the real budget formula on hypothetical numbers ("What if Food were
-   $450/mo?").
+### Mood check-ins
 
-The three components combine into the Happiness Index:
+Momo asks you **10 quick questions**, drawn at random from ten dimensions of how you're doing — sleep, energy, stress, focus, social connection, movement, mood, appetite, calm, and outlook. Each question has five simple answers, from rough to great. It takes about a minute.
 
-```
-index = mood × 40% + routines × 35% + budget × 25%
-```
+Your mood score is the average of your recent check-ins, so one bad morning doesn't define your week — but a run of tired, stressed days shows up plainly. If you haven't checked in yet, Momo doesn't invent a number; it just asks for your first check-in.
 
-Bands: **Thriving** 80–100 · **Content** 60–79 · **Low** 40–59 ·
-**Struggling** below 40. The band — not the number — is the point: Momo
-reacts to the band.
+Check-ins can happen right from the lock screen, or by tapping the floating bubble — no need to open the app and navigate anywhere.
 
-## The formulas
+### Daily routines
 
-### Mood component
+You create the routines that make your days work — a wake time, a workout, deep work, reading, an evening walk — and Momo tracks which ones you followed and which you missed. The routines score is your completion rate over the last 30 days.
 
-One check-in's score is the mean answer mapped to 0–100
-(`mean / 4 × 100`). The mood component is the mean of check-in scores
-from the last 7 days. No check-ins yet → no number is invented; the UI
-asks for a first check-in.
+Streaks **pause, they don't punish**: miss a day and the streak freezes; complete the routine the next day and it resumes from where it froze. Momo celebrates the return instead of mourning the gap. Each routine has its own detail view with its streak, its week at a glance, and its history — so you can see which habits are actually sticking and which ones keep quietly falling off.
 
-### Routine component
+### Budget planner & tracker
 
-```
-routines = completed slots / (routines × 30 days) × 100
-```
+Money stress is happiness stress, so Momo includes a simple monthly budget: one plan across spending categories (food, transport, fun, home, health, and more), with spent-vs-planned shown per category. The budget score rewards staying comfortably within your plan — spending up to about a third of your plan costs nothing, and each category that goes over its plan costs points.
 
-over the last 30 days. No routines yet → no number is invented.
+A "what if" simulator lets you try changes before making them — see how your budget score would move if food were a little lower, or fun a little higher — so the budget feels like a set of choices, not a lecture.
 
-### Budget component
+### The Happiness Index, in the open
 
-```
-score = 100 − 48 × max(0, utilization − 0.35) − 15 × overCategories
-```
+Home shows the index as a ring, with the three inputs and their contributions right beside it. In the demo's example day, the numbers are mood 76, routines 72, and budget 78 — which combine to 75.1, shown as **75, Content** (30.4 from mood + 25.2 from routines + 19.5 from budget). Tapping into the formula shows the full breakdown, and a history view shows how the index has moved over time.
 
-where `utilization = spent / planned` for the month. Spending up to 35%
-of the plan costs nothing; past that, each 10% of utilization costs
-~5 points; each category over its plan costs 15 points. Clamped 0–100.
+### Insights, milestones & goals
 
-## Guest-first, local-first
+Momo reads your own numbers back to you as plain-language insights — which days your index runs higher, which routines correlate with better weeks, where your spending drifted. Milestones mark the moments worth celebrating (a 30-day check-in run, a streak record), and a goal setter lets you pick a target — a happiness goal, a budget goal, a routine goal — and watch progress toward it.
 
-- **No account needed.** The whole pet works as a guest. An account
-  unlocks only two things: sync across devices and read-only friend
-  sharing (index + band — never amounts, never answers).
-- **On-device only.** All state is one JSON document in
-  `shared_preferences`. There is no backend in v0.1 and nothing is
-  uploaded. Export (JSON file or clipboard), sign out, and delete-all
-  live in Data Controls.
-- **Amounts stay hidden.** The widget snapshot and lock-screen prompts
-  carry the index + band only — safe for a screenshot, by design.
+### The companion, everywhere
 
-## Honest limits
+Momo the corgi lives beyond the app's screens:
 
-Read this before quoting any number from the demo:
+- **Floating bubble** — a small Momo that floats over your phone; tap it for a one-tap mood check-in or a quick look at your index.
+- **Home-screen widget** — your index and band at a glance, in small, medium, or large. It shows only the index and band — never amounts or answers — so it's safe on a shared screen.
+- **Lock-screen check-ins** — Momo can ask how you're doing right from the lock screen, so a check-in takes seconds.
 
-- **The seeded numbers are a demo story, not measured data.** First
-  launch seeds the V7 design's canonical numbers — index 75 (Content)
-  from mood 76, routines 72, budget 78; $2,400/mo plan, $1,936 spent;
-  six routines, 5 of 6 done today, a 12-day streak; history 68 → 75.
-  They are labelled DEMO wherever they show, and Settings → Demo data
-  clears them. The formulas then run on real activity only.
-- **The simulator is live, the design mock numbers were static.** The
-  V7 mock showed fixed simulator values (Food $450 → 81, …) that don't
-  follow one consistent formula. v0.1 computes every simulator row from
-  the real budget formula above, so values differ from the mock — and
-  are self-consistent instead.
-- **Sign-in is local-only.** No email is sent; any 6-digit code verifies
-  on-device. "Sync" records the preference locally; there is no server
-  yet. Real magic-link email + multi-device sync need a backend
-  (phase 2).
-- **The companion is in-app in v0.1.** The floating bubble works over
-  Momo's own screens; the widget state is ready (index + band only) and
-  the lock-screen flow runs the real check-in — but a true system-level
-  bubble, home-screen widget, and lock-screen extension need native
-  platform code (phase 2). Nothing pretends otherwise.
-- **No alarms (yet).** Routine times are labels, not scheduled
-  notifications. Nudges are in-app only in v0.1.
+### Guest-first, private by design
 
-## Verification
+No account is needed. The whole pet works as a guest — check-ins, routines, budget, the companion, all of it. Signing in unlocks only two things: keeping everything in sync across your devices, and sharing a read-only view with a friend (your index and band only — never amounts, never check-in answers).
 
-Flutter/Dart is not installed on the build VM, so the Dart test suite is
-**authored, not yet run** — run `flutter test` on a machine with Flutter
-to execute it. The suite covers:
+Your data stays on your device. You can export everything, sign out, or delete it all, from one place in Settings.
 
-- **Happiness Index math**: the seeded 76/72/78 → 75.1 → 75, per-input
-  contributions (30.4 / 25.2 / 19.5), rounding, and every band boundary.
-- **Budget formula**: the seeded month scores 78, the 35% free band,
-  the 15-point over-category penalty, clamping, and both simulator
-  directions.
-- **Check-ins**: the 10-dimension bank, deterministic shuffled draws,
-  scoring extremes, and the null-when-empty rule.
-- **Routines**: streak growth, the pause rule (a miss never resets to
-  zero), the 30-day completion rate, and JSON round-trips.
-- **Controller**: the seeded demo computes to 75/Content end-to-end,
-  check-in submission moves the mood component, toggling a routine grows
-  its streak, expenses move spent, clearing demo data leaves no invented
-  index, the local sign-in flow, and JSON export validity.
+## The interface
 
-```sh
-flutter test     # Dart test suite
-flutter analyze  # lints
-```
+Momo has 30 screens, designed as one continuous flow — from the first splash and onboarding, through check-ins, routines, and budgeting, to history, goals, settings, and account.
 
-## Run the app
+**Mobile — all 30 screens**
 
-```sh
-flutter pub get
-flutter run            # mobile / desktop
-flutter run -d chrome  # web
-```
+<img src="docs/screenshots/mobile-grid.jpg" alt="Momo mobile app — all 30 screens: splash, onboarding, home with the Happiness Index ring, mood check-in, routines, overlay bubble, widget, lock-screen check-in, happiness bands, budget tracker, insights, history, goal setter, milestone, settings, privacy, and the guest and account flows" width="800">
 
-## Layout
+**Web — all 30 screens**
 
-```
-lib/
-  main.dart                  Entry point (loads state, seeds demo on first launch)
-  app.dart                   App shell + all 30 routes + floating bubble
-  app_routes.dart            Route names + screen atlas labels
-  core/
-    constants.dart           Formula weights, bands, demo fixture, currencies
-    theme.dart               V7 palette (night-sky cocoa, coral→peach CTAs)
-    format.dart              Money / date formatting
-  engine/                    Pure logic — no Flutter state, fully tested
-    happiness.dart           Index formula, bands
-    checkin.dart             Question bank, random draw, scoring
-    routines.dart            Routine model, streaks (pause, don't punish)
-    budget.dart              Categories, expenses, budget score, simulator
-    insights.dart            Insights computed from the user's own numbers
-  state/
-    momo_state.dart          The whole app state as one JSON document
-    momo_controller.dart     ChangeNotifier: derived values + all actions
-    momo_scope.dart          InheritedNotifier provider
-  services/
-    storage_service.dart     KeyValueStore (prefs in app, memory in tests)
-    export_service*.dart     JSON export (native file / web download / stub)
-    companion_service.dart   Widget-safe snapshot (index + band, no amounts)
-  widgets/
-    momo_avatar.dart         Momo the corgi (SVG logo, mood ring, bobbing)
-    index_ring.dart          Animated Happiness Index ring
-    glass_card.dart          Glass cards, kickers, gradient buttons, stat tiles
-    formula_card.dart        The formula, shown in the open
-    app_scaffold.dart        Adaptive shell (mobile + desktop sidebar) + TwoColumn
-    budget_widgets.dart      Category bars, simulator rows
-    momo_bubble.dart         Draggable in-app companion bubble
-  screens/                   30 screens (01 splash → 30 data controls)
-    splash_screen.dart             onboarding_a_screen.dart
-    onboarding_b_screen.dart       add_details_screen.dart
-    home_screen.dart               checkin_screen.dart
-    checkin_result_screen.dart     routines_screen.dart
-    routine_detail_screen.dart     overlay_bubble_screen.dart
-    widget_screen.dart             lock_screen_screen.dart
-    bands_screen.dart              budget_screen.dart
-    insights_screen.dart           history_screen.dart
-    goal_setter_screen.dart        milestone_screen.dart
-    settings_screen.dart           privacy_screen.dart
-    welcome_screen.dart            guest_mode_screen.dart
-    sign_in_screen.dart            create_account_screen.dart
-    verify_screen.dart             upgrade_prompt_screen.dart
-    migrate_screen.dart            account_screen.dart
-    connected_screen.dart          data_controls_screen.dart
-test/                        Dart test suite (flutter test)
-assets/logos/                Momo logo system (SVG): icon, horizontal,
-                             stacked, app-icon. The lockups carry a dark
-                             wordmark — shown on a light chip in-app.
-web/                         Web entry (index.html, manifest.json)
-```
-
-Every route renders both presentations: a mobile layout on narrow
-screens and a desktop layout (sidebar shell + wider content) on wide
-screens — the 30 mobile + 30 web screens of the V7 design, from one
-codebase.
-
-## Roadmap (phase 2)
-
-1. **Dual dark/light themes** — the theme is structured for the swap
-   (`AppTheme` gains a second `ThemeData`, the shell a mode toggle).
-2. **Backend + real auth** — magic-link email, multi-device sync,
-   real share links.
-3. **Native companion** — system-level bubble (Android overlay),
-   home-screen widget (AppWidget / WidgetKit), lock-screen extension.
-4. **Scheduled nudges** — routine-time notifications, Sunday nudge.
-5. **Drift/SQLite history** — relational store for check-in and expense
-   history as it grows (today: one JSON document in shared_preferences).
-6. **Secure storage for secrets** — account tokens move to
-   flutter_secure_storage when real auth lands.
-7. **Bank sync (opt-in, on-device)** — automatic expense import, with
-   the same on-device promise.
-
-## Appendix: CI workflow (add via web UI)
-
-No `.github/workflows/` file is included in this repo (the GitHub App
-cannot push workflow files). To add CI, create
-`.github/workflows/flutter.yml` in the GitHub web UI with:
-
-```yaml
-name: Flutter
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.27.x'
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
-```
+<img src="docs/screenshots/web-grid.jpg" alt="Momo web app — all 30 screens in the wide layout with sidebar navigation: the same flow from splash and onboarding through the Happiness Index home, check-ins, routines, budget, insights, history, goals, settings, and account" width="800">
