@@ -24,20 +24,31 @@ class MomoController extends ChangeNotifier {
     : _store = store;
 
   /// Loads persisted state, or seeds the demo on first launch.
+  ///
+  /// A corrupt stored document (unparseable JSON, or valid JSON with the
+  /// wrong shape — e.g. a partial write or an older schema) must never
+  /// strand the app: it re-seeds the demo and overwrites the corrupt
+  /// document, so the next launch loads cleanly.
   static Future<MomoController> load({
     required StorageService store,
   }) async {
     final raw = await store.read();
-    if (raw == null) {
-      final state = MomoState.seededDemo(now: DateTime.now());
-      final controller = MomoController(state: state, store: store);
-      await controller._persist();
-      return controller;
+    if (raw != null) {
+      try {
+        final state = MomoState.fromJson(
+          jsonDecode(raw) as Map<String, dynamic>,
+        );
+        return MomoController(state: state, store: store);
+      } on FormatException {
+        // Unparseable JSON — fall through and re-seed below.
+      } on TypeError {
+        // Valid JSON, wrong shape — same recovery.
+      }
     }
-    final state = MomoState.fromJson(
-      jsonDecode(raw) as Map<String, dynamic>,
-    );
-    return MomoController(state: state, store: store);
+    final state = MomoState.seededDemo(now: DateTime.now());
+    final controller = MomoController(state: state, store: store);
+    await controller._persist();
+    return controller;
   }
 
   /// The current state. Screens read through the controller's getters;
@@ -275,12 +286,21 @@ class MomoController extends ChangeNotifier {
 
   /// Marks a routine done (or undoes it) for today. Completing grows the
   /// streak by one — from its frozen value if it was paused. Undoing
-  /// never punishes: the streak stays.
+  /// reverts that increment: the streak returns to what it was before
+  /// today's completion, and the last-completed day goes back to the
+  /// most recent remaining completion. Undoing never punishes beyond
+  /// the revert — the streak is never zeroed by a miss.
   Future<void> toggleRoutineDone(String routineId) => _mutate(() async {
     final routine = state.routines.firstWhere((r) => r.id == routineId);
     final today = dayKey(DateTime.now());
     if (routine.doneOn(today)) {
       routine.completions.remove(today);
+      if (routine.lastCompletedKey == today) {
+        if (routine.streakDays > 0) routine.streakDays--;
+        final remaining = routine.completions.toList()..sort();
+        routine.lastCompletedKey =
+            remaining.isEmpty ? null : remaining.last;
+      }
     } else {
       routine.completions.add(today);
       routine.streakDays = nextStreak(
@@ -463,16 +483,21 @@ class MomoController extends ChangeNotifier {
   Future<bool?> verifyCode(String code) async {
     if (pendingEmail == null || code.length != 6) return null;
     final isNewAccount = pendingDisplayName != null;
+    final email = pendingEmail;
+    final displayName = pendingDisplayName;
     await _mutate(() async {
       state.authMode = AuthMode.account;
-      state.email = pendingEmail;
+      state.email = email;
       state.displayName =
-          pendingDisplayName ?? state.displayName ?? "Momo's human";
+          displayName ?? state.displayName ?? "Momo's human";
       state.syncOn = true;
       state.shareCode ??= _generateShareCode();
-      pendingEmail = null;
-      pendingDisplayName = null;
     });
+    // Cleared only after the persist succeeds: if the write fails, the
+    // pending sign-in survives and the user can retry instead of being
+    // told there is no sign-in in progress.
+    pendingEmail = null;
+    pendingDisplayName = null;
     return isNewAccount;
   }
 

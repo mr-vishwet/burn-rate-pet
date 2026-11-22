@@ -40,9 +40,22 @@ class _VerifyScreenState extends State<VerifyScreen> {
       _verifying = true;
       _error = null;
     });
-    final result = await MomoScope.read(
-      context,
-    ).verifyCode(_codeController.text.trim());
+    bool? result;
+    try {
+      result = await MomoScope.read(
+        context,
+      ).verifyCode(_codeController.text.trim());
+    } catch (_) {
+      // The save failed (e.g. storage full or unavailable): re-enable the
+      // button and say so, instead of leaving it on "Verifying…" forever.
+      // The pending sign-in survives the failure, so retrying works.
+      if (!mounted) return;
+      setState(() {
+        _verifying = false;
+        _error = "Couldn't save your sign-in — please try again.";
+      });
+      return;
+    }
     if (!mounted) return;
     setState(() => _verifying = false);
     if (result == null) {

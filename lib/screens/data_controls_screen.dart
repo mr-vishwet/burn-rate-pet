@@ -87,6 +87,19 @@ class DataControlsScreen extends StatelessWidget {
                                   ),
                                 ),
                               );
+                            } catch (_) {
+                              // Any other save failure (e.g. the browser
+                              // blocking the download): say so instead of
+                              // failing silently.
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Export failed — please try again, or '
+                                    'use Copy instead.',
+                                  ),
+                                ),
+                              );
                             }
                           },
                         ),

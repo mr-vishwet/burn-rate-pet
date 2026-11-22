@@ -34,10 +34,25 @@ class _CheckinScreenState extends State<CheckinScreen> {
   Future<void> _finish() async {
     setState(() => _submitting = true);
     final controller = MomoScope.read(context);
-    await controller.submitCheckin(
-      questionIds: _questions.map((q) => q.id).toList(),
-      answers: _answers.map((a) => a ?? 2).toList(),
-    );
+    try {
+      await controller.submitCheckin(
+        questionIds: _questions.map((q) => q.id).toList(),
+        answers: _answers.map((a) => a ?? 2).toList(),
+      );
+    } catch (_) {
+      // The save failed (e.g. storage full or unavailable): re-enable the
+      // button and say so, instead of leaving it disabled with no message.
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Couldn't save your check-in — please try again.",
+          ),
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed(AppRoutes.checkinResult);
   }

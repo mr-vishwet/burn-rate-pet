@@ -32,50 +32,62 @@ class IndexRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fraction = (value / 100).clamp(0.0, 1.0);
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: fraction),
-      duration: const Duration(milliseconds: 1200),
-      curve: Curves.easeOutCubic,
-      builder: (context, animated, _) {
-        return SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CustomPaint(
-                size: Size(size, size),
-                painter: _RingPainter(
-                  fraction: animated,
-                  stroke: stroke,
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
+    // The "Happiness Index" caption sits BELOW the ring, not inside it:
+    // inside, the bottom of the centred column lands where the circle's
+    // chord is narrow, and the caption collided with the ring's stroke.
+    // Inside the ring there is only the number + the band label, which
+    // fit the chord comfortably at every size.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: fraction),
+          duration: const Duration(milliseconds: 1200),
+          curve: Curves.easeOutCubic,
+          builder: (context, animated, _) {
+            return SizedBox(
+              width: size,
+              height: size,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Text(
-                    '${(animated * 100).round()}',
-                    style: AppTheme.monoNumbers(
-                      size: size * 0.30,
-                      weight: FontWeight.w600,
+                  CustomPaint(
+                    size: Size(size, size),
+                    painter: _RingPainter(
+                      fraction: animated,
+                      stroke: stroke,
                     ),
                   ),
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.peachSoft,
-                    ),
-                  ),
-                  Text(
-                    'Happiness Index',
-                    style: Theme.of(context).textTheme.bodySmall,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${(animated * 100).round()}',
+                        style: AppTheme.monoNumbers(
+                          size: size * 0.30,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        label,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(
+                              color: AppTheme.peachSoft,
+                            ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Happiness Index',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:momo/core/format.dart';
 import 'package:momo/engine/happiness.dart';
 import 'package:momo/services/storage_service.dart';
 import 'package:momo/state/momo_controller.dart';
@@ -86,6 +87,37 @@ void main() {
       expect(controller.routinesDoneTodayCount, 6);
     });
 
+    test('undoing a routine reverts the streak increment', () async {
+      final routine = controller.state.routines.firstWhere(
+        (r) => r.name == 'Evening walk',
+      );
+      expect(routine.streakDays, 3);
+      await controller.toggleRoutineDone(routine.id);
+      expect(routine.streakDays, 4);
+      expect(controller.routinesDoneTodayCount, 6);
+      await controller.toggleRoutineDone(routine.id);
+      expect(routine.streakDays, 3);
+      expect(controller.routinesDoneTodayCount, 5);
+      expect(
+        routine.lastCompletedKey,
+        dayKey(DateTime.now().subtract(const Duration(days: 1))),
+      );
+    });
+
+    test('undoing a routine done today drops its streak by one', () async {
+      final routine = controller.state.routines.firstWhere(
+        (r) => r.name == 'Wake up',
+      );
+      expect(routine.streakDays, 8);
+      await controller.toggleRoutineDone(routine.id);
+      expect(routine.streakDays, 7);
+      expect(controller.routinesDoneTodayCount, 4);
+      expect(
+        routine.lastCompletedKey,
+        dayKey(DateTime.now().subtract(const Duration(days: 1))),
+      );
+    });
+
     test('logging an expense moves spent and the budget score', () async {
       final before = controller.spentCents;
       await controller.addExpense(
@@ -135,4 +167,68 @@ void main() {
       expect(decoded['checkins'], isA<List<dynamic>>());
     });
   });
+
+  group('MomoController corrupt stored state', () {
+    test('garbage JSON re-seeds the demo instead of throwing', () async {
+      final store = StorageService(
+        MemoryStore({StorageService.stateKey: 'not json {{{'}),
+      );
+      final controller = await MomoController.load(store: store);
+      expect(controller.state.demoSeeded, isTrue);
+      expect(controller.index, 75);
+    });
+
+    test('valid JSON with the wrong shape re-seeds the demo', () async {
+      final store = StorageService(
+        MemoryStore({
+          StorageService.stateKey: '{"checkins": "nope", "routines": 42}',
+        }),
+      );
+      final controller = await MomoController.load(store: store);
+      expect(controller.state.demoSeeded, isTrue);
+      expect(controller.index, 75);
+    });
+
+    test('recovery overwrites the corrupt document with valid JSON',
+        () async {
+      final store = StorageService(
+        MemoryStore({StorageService.stateKey: 'garbage {{{'}),
+      );
+      await MomoController.load(store: store);
+      final reloaded = await MomoController.load(store: store);
+      expect(reloaded.index, 75);
+      expect(reloaded.state.demoSeeded, isTrue);
+    });
+  });
+
+  group('MomoController storage failure', () {
+    test('a failed verify keeps the pending sign-in for a retry', () async {
+      final controller = MomoController(
+        state: MomoState.seededDemo(now: DateTime.now()),
+        store: StorageService(_ThrowingStore()),
+      );
+      await controller.beginCreateAccount(
+        email: 'you@example.com',
+        name: "Momo's human",
+      );
+      await expectLater(controller.verifyCode('123456'), throwsStateError);
+      expect(controller.pendingEmail, 'you@example.com');
+      expect(controller.pendingDisplayName, "Momo's human");
+    });
+  });
+}
+
+/// A store whose writes always fail — the storage-full / storage-blocked
+/// failure mode on web.
+class _ThrowingStore implements KeyValueStore {
+  @override
+  Future<String?> read(String key) async => null;
+
+  @override
+  Future<void> write(String key, String value) async {
+    throw StateError('storage unavailable');
+  }
+
+  @override
+  Future<void> remove(String key) async {}
 }
