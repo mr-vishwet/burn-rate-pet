@@ -7,12 +7,12 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
 
-/// 10 Overlay Bubble: Momo floats over other apps — a 10-second check-in
-/// without opening the app.
+/// 10 Overlay Bubble: Momo floats over Momo's own screens — a 10-second
+/// check-in without leaving what you are doing in the app.
 ///
-/// v0.1: the bubble floats over Momo's own screens (in-app). A true
-/// system-level bubble over other apps needs native overlay code and is
-/// phase-2 work; this screen says so plainly.
+/// The bubble is real in-app (toggle below). Floating over OTHER apps
+/// needs a system overlay permission and native code, and comes with the
+/// mobile app; this screen says so plainly.
 class OverlayBubbleScreen extends StatelessWidget {
   /// Creates the overlay bubble screen.
   const OverlayBubbleScreen({super.key});
@@ -34,12 +34,12 @@ class OverlayBubbleScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Kicker('Momo, everywhere'),
+                  const Kicker('Momo, everywhere in the app'),
                   const SizedBox(height: 8),
                   Text(
-                    'The bubble parks over whatever you are doing. One tap '
-                    'and Momo asks a single question — ten seconds, then '
-                    'you are done.',
+                    'The bubble parks over Momo\'s screens while you use '
+                    'the app. One tap and Momo asks a single question — '
+                    'ten seconds, then you are done.',
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
@@ -63,11 +63,14 @@ class OverlayBubbleScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // A mock "other app" (Notes) with the bubble parked over it.
+            // A mock "other app" (Notes) with the bubble parked over it —
+            // a preview of the mobile app's system-level bubble.
             GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Kicker('Preview — coming with the mobile app'),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       const Icon(Icons.note_outlined, color: AppTheme.taupe),
@@ -132,9 +135,9 @@ class OverlayBubbleScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'v0.1: the bubble floats over Momo itself. Floating '
+                      'The bubble floats over Momo itself today. Floating '
                       'over other apps needs a system overlay permission '
-                      'and native code — phase 2.',
+                      'and native code — coming with the mobile app.',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),

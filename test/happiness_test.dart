@@ -3,7 +3,7 @@ import 'package:momo/engine/happiness.dart';
 
 void main() {
   group('HappinessIndex formula', () {
-    test('seeded demo numbers compute to 75.1 -> 75', () {
+    test('example inputs compute to 75.1 -> 75', () {
       final raw = HappinessIndex.raw(mood: 76, routines: 72, budget: 78);
       expect(raw, closeTo(75.1, 0.001));
       expect(
@@ -12,7 +12,7 @@ void main() {
       );
     });
 
-    test('contributions are the V7 numbers', () {
+    test('contributions split by the formula weights', () {
       final parts = HappinessIndex.contributions(
         mood: 76,
         routines: 72,

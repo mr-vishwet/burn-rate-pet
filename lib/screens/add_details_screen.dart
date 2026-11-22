@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../app_routes.dart';
+import '../core/format.dart';
 import '../engine/budget.dart';
 import '../state/momo_scope.dart';
 import '../widgets/app_scaffold.dart';
@@ -9,7 +10,8 @@ import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
 
 /// 04 Add Your Details: one budget, five categories, thirty seconds —
-/// stored on-device only. Pre-filled with the demo plan; edit freely.
+/// stored on-device only. Pre-filled with a suggested starting plan;
+/// edit freely.
 class AddDetailsScreen extends StatefulWidget {
   /// Creates the details screen.
   const AddDetailsScreen({super.key});
@@ -48,11 +50,11 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       0,
       (sum, c) => sum + c.plannedCents,
     );
-    _totalController.text = (total ~/ 100).toString();
+    _totalController.text = moneyInputText(total);
     for (final category in _categories) {
       _categoryControllers.add(
         TextEditingController(
-          text: (category.plannedCents ~/ 100).toString(),
+          text: moneyInputText(category.plannedCents),
         ),
       );
     }
@@ -67,10 +69,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     super.dispose();
   }
 
-  int _parse(TextEditingController controller) {
-    final value = int.tryParse(controller.text.trim()) ?? 0;
-    return value < 0 ? 0 : value;
-  }
+  /// Parses a money field into cents — decimals allowed ("12.50" → 1250).
+  int _parse(TextEditingController controller) =>
+      parseMoneyToCents(controller.text);
 
   Future<void> _save() async {
     final controller = MomoScope.read(context);
@@ -81,12 +82,12 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
         BudgetCategory(
           id: category.id,
           name: category.name,
-          plannedCents: _parse(_categoryControllers[i]) * 100,
+          plannedCents: _parse(_categoryControllers[i]),
           spentCents: category.spentCents,
         ),
       );
     }
-    final goal = _parse(_totalController) * 100;
+    final goal = _parse(_totalController);
     await controller.saveDetails(
       categories: updated,
       monthlyBudgetGoalCents: goal,
@@ -102,6 +103,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currency = MomoScope.of(context).state.currency;
+    final symbol = currencySymbol(currency);
     return AppScaffold(
       title: 'Add Your Details',
       showBack: true,
@@ -132,12 +135,15 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _totalController,
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
                     ],
-                    decoration: const InputDecoration(
-                      prefixText: '\$ ',
+                    decoration: InputDecoration(
+                      prefixText: '$symbol ',
                       hintText: '2400',
                       labelText: 'A month that feels right',
                     ),
@@ -148,12 +154,15 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   for (var i = 0; i < _categories.length; i++) ...[
                     TextField(
                       controller: _categoryControllers[i],
-                      keyboardType: TextInputType.number,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
                       ],
                       decoration: InputDecoration(
-                        prefixText: '\$ ',
+                        prefixText: '$symbol ',
                         labelText: _categories[i].name,
                       ),
                     ),

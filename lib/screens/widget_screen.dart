@@ -9,9 +9,10 @@ import '../widgets/momo_avatar.dart';
 /// 11 Widget: the home-screen widget — Momo, the index, the band.
 /// Amounts never shown. Safe for a screenshot, by design.
 ///
-/// v0.1: the widget state is ready (index + band only) and this screen
-/// previews all three sizes. The native home-screen widget itself needs
-/// platform code and is phase-2 work.
+/// Coming with the mobile app: a native home-screen widget needs
+/// platform code this web-only build cannot ship. This screen previews
+/// what the widget will show, from the user's real index and band —
+/// nothing here pretends the widget is installed.
 class WidgetScreen extends StatelessWidget {
   /// Creates the widget screen.
   const WidgetScreen({super.key});
@@ -31,21 +32,25 @@ class WidgetScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Home-screen widget',
-                    style: theme.textTheme.titleSmall,
+            GlassCard(
+              child: Row(
+                children: [
+                  const Icon(Icons.smartphone_outlined,
+                      color: AppTheme.peach),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Coming with the mobile app — a real home-screen '
+                      'widget needs native code. Below is a preview of '
+                      'what it will show, from your real index and band.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   ),
-                ),
-                Switch(
-                  value: controller.state.widgetEnabled,
-                  onChanged: (value) =>
-                      controller.setCompanion(widgetEnabled: value),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(height: 16),
+            const Kicker('Preview'),
             const SizedBox(height: 12),
             // Medium widget preview.
             GlassCard(
@@ -149,21 +154,6 @@ class WidgetScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            GradientButton(
-              label: 'Add widget',
-              icon: Icons.add,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'v0.1: the widget preview lives here. The native '
-                      'home-screen widget needs platform code — phase 2.',
-                    ),
-                  ),
-                );
-              },
             ),
           ],
         ),

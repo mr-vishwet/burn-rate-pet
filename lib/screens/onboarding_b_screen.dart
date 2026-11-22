@@ -18,8 +18,10 @@ class OnboardingBScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = MomoScope.of(context);
     final theme = Theme.of(context);
-    final mood = controller.moodScore ?? 76;
-    final routines = controller.routineScoreValue ?? 72;
+    // No fallbacks: with no check-ins or routines yet the formula card
+    // shows "—" for the missing inputs instead of invented numbers.
+    final mood = controller.moodScore;
+    final routines = controller.routineScoreValue;
     final budget = controller.budgetScoreValue;
     return AppScaffold(
       title: 'One Index',

@@ -7,10 +7,13 @@ import 'glass_card.dart';
 /// The formula card — the Happiness Index formula, shown in the open,
 /// with each input's contribution. Never hidden behind a tap.
 ///
-///   Check-ins 76 × 40% = 30.4
-///   Routines  72 × 35% = 25.2
-///   Budget    78 × 25% = 19.5
-///   = 75.1 → 75 · Content
+///   Check-ins 80 × 40% = 32.0
+///   Routines  70 × 35% = 24.5
+///   Budget    80 × 25% = 20.0
+///   = 76.5 → 77 · Content
+///
+/// Inputs that don't exist yet (no check-ins, no routines) show "—" and
+/// the total row says so honestly — no number is invented to fill the gap.
 class FormulaCard extends StatelessWidget {
   /// Creates the formula card.
   const FormulaCard({
@@ -20,29 +23,36 @@ class FormulaCard extends StatelessWidget {
     super.key,
   });
 
-  /// Mood component (0-100).
-  final int mood;
+  /// Mood component (0-100), or null when there are no check-ins yet.
+  final int? mood;
 
-  /// Routine component (0-100).
-  final int routines;
+  /// Routine component (0-100), or null when there are no routines yet.
+  final int? routines;
 
   /// Budget component (0-100).
   final int budget;
 
   @override
   Widget build(BuildContext context) {
-    final parts = HappinessIndex.contributions(
-      mood: mood,
-      routines: routines,
-      budget: budget,
-    );
-    final raw = HappinessIndex.raw(
-      mood: mood,
-      routines: routines,
-      budget: budget,
-    );
-    final index = raw.round();
-    final band = HappinessIndex.bandFor(index);
+    final mood = this.mood;
+    final routines = this.routines;
+    final hasAllInputs = mood != null && routines != null;
+    final parts = hasAllInputs
+        ? HappinessIndex.contributions(
+            mood: mood,
+            routines: routines,
+            budget: budget,
+          )
+        : null;
+    final raw = hasAllInputs
+        ? HappinessIndex.raw(
+            mood: mood,
+            routines: routines,
+            budget: budget,
+          )
+        : null;
+    final index = raw?.round();
+    final band = index == null ? null : HappinessIndex.bandFor(index);
     final theme = Theme.of(context);
     return GlassCard(
       child: Column(
@@ -54,41 +64,50 @@ class FormulaCard extends StatelessWidget {
             label: 'Check-ins',
             value: mood,
             weight: '40%',
-            contribution: parts.mood,
+            contribution: parts?.mood,
           ),
           const SizedBox(height: 6),
           _FormulaLine(
             label: 'Routines',
             value: routines,
             weight: '35%',
-            contribution: parts.routines,
+            contribution: parts?.routines,
           ),
           const SizedBox(height: 6),
           _FormulaLine(
             label: 'Budget',
             value: budget,
             weight: '25%',
-            contribution: parts.budget,
+            contribution: parts?.budget,
           ),
           const Divider(color: AppTheme.hairline, height: 24),
-          Row(
-            children: [
-              Text(
-                '= ${raw.toStringAsFixed(1)} → $index',
-                style: AppTheme.monoNumbers(
-                  size: 16,
-                  weight: FontWeight.w600,
+          if (raw != null && index != null && band != null)
+            Row(
+              children: [
+                Text(
+                  '= ${raw.toStringAsFixed(1)} → $index',
+                  style: AppTheme.monoNumbers(
+                    size: 16,
+                    weight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '· ${band.label}',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: band.color,
+                const SizedBox(width: 8),
+                Text(
+                  '· ${band.label}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: band.color,
+                  ),
                 ),
+              ],
+            )
+          else
+            Text(
+              'No index yet — your first check-in and your first routine '
+              'fill in the missing numbers.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppTheme.peachSoft,
               ),
-            ],
-          ),
+            ),
           const SizedBox(height: 6),
           Text(
             'Mood 40% + routines 35% + budget 25%. The band — not the '
@@ -110,9 +129,9 @@ class _FormulaLine extends StatelessWidget {
   });
 
   final String label;
-  final int value;
+  final int? value;
   final String weight;
-  final double contribution;
+  final double? contribution;
 
   @override
   Widget build(BuildContext context) {
@@ -127,12 +146,14 @@ class _FormulaLine extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '$value × $weight',
+            value == null ? '— × $weight' : '$value × $weight',
             style: AppTheme.monoNumbers(size: 13, color: AppTheme.peachSoft),
           ),
         ),
         Text(
-          '= ${contribution.toStringAsFixed(1)}',
+          contribution == null
+              ? '= —'
+              : '= ${contribution!.toStringAsFixed(1)}',
           style: AppTheme.monoNumbers(size: 13),
         ),
       ],

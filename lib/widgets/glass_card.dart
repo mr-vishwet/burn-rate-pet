@@ -154,28 +154,3 @@ class StatTile extends StatelessWidget {
     );
   }
 }
-
-/// A "DEMO" chip marking seeded demo content wherever it shows.
-class DemoChip extends StatelessWidget {
-  /// Creates a demo chip.
-  const DemoChip({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppTheme.orange.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.orange.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        'DEMO',
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: AppTheme.orange,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}

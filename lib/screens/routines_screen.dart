@@ -9,7 +9,7 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
 
-/// 08 Routines: six fixed days, kindly kept — done today, streaks, and
+/// 08 Routines: daily routines, kindly kept — done today, streaks, and
 /// the kind rule. Tap a routine for its detail; add your own.
 class RoutinesScreen extends StatelessWidget {
   /// Creates the routines screen.

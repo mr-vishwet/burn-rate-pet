@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../app_routes.dart';
 import '../core/theme.dart';
-import '../state/momo_scope.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
@@ -10,15 +9,15 @@ import '../widgets/momo_avatar.dart';
 /// 12 Lock-screen Check-in: Momo asks about your focus before you unlock
 /// — amounts stay hidden on the lock screen.
 ///
-/// v0.1: an in-app preview + the real check-in flow. A true lock-screen
-/// extension needs native code and is phase-2 work.
+/// Coming with the mobile app: a true lock-screen extension needs native
+/// code this web-only build cannot ship. This screen previews how it will
+/// look; the Check in button runs the real in-app check-in flow.
 class LockScreenScreen extends StatelessWidget {
   /// Creates the lock-screen screen.
   const LockScreenScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = MomoScope.of(context);
     final theme = Theme.of(context);
     final now = DateTime.now();
     final time =
@@ -35,22 +34,26 @@ class LockScreenScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Lock-screen check-ins',
-                    style: theme.textTheme.titleSmall,
+            GlassCard(
+              child: Row(
+                children: [
+                  const Icon(Icons.smartphone_outlined,
+                      color: AppTheme.peach),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Coming with the mobile app — lock-screen check-ins '
+                      'need native code. Below is a preview of how they '
+                      'will look.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   ),
-                ),
-                Switch(
-                  value: controller.state.lockCheckinsEnabled,
-                  onChanged: (value) =>
-                      controller.setCompanion(lockCheckinsEnabled: value),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
+            const Kicker('Preview'),
+            const SizedBox(height: 12),
             // Lock-screen preview.
             Container(
               padding: const EdgeInsets.all(20),
@@ -98,25 +101,12 @@ class LockScreenScreen extends StatelessWidget {
                         ),
                         child: const Text('Check in'),
                       ),
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Snoozed for an hour. Momo will wait.',
-                              ),
-                            ),
-                          );
-                        },
-                        child: const Text('Snooze 1h'),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Swipe up to check in · amounts stay hidden on the '
-                    'lock screen',
+                    'Preview: swipe up to check in · amounts stay hidden '
+                    'on the lock screen',
                     style: theme.textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
@@ -131,9 +121,9 @@ class LockScreenScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'v0.1: this preview runs the real check-in flow. A '
-                      'true lock-screen extension needs native code — '
-                      'phase 2.',
+                      'The preview above runs the real check-in flow when '
+                      'you tap Check in. The lock-screen extension itself '
+                      'comes with the mobile app.',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),

@@ -93,7 +93,7 @@ class CategoryBar extends StatelessWidget {
   }
 }
 
-/// One simulator row: "If Food dropped to $450 → budget 81".
+/// One simulator row: "If Food's plan dropped → budget 81".
 class SimulatorRow extends StatelessWidget {
   /// Creates a simulator row.
   const SimulatorRow({
@@ -104,7 +104,8 @@ class SimulatorRow extends StatelessWidget {
     super.key,
   });
 
-  /// What changes, e.g. "Food \$450/mo".
+  /// What changes, e.g. "Food $400/mo" — always built from the user's
+  /// own categories, never hardcoded.
   final String label;
 
   /// Simulated budget score.

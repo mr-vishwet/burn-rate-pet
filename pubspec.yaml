@@ -25,6 +25,7 @@ dependencies:
   material_ui: ^1.11.1
   # Browser APIs for the web JSON export (replaces dart:html).
   web: ^1.1.2
+  file_picker: ^13.4.1
 
 dev_dependencies:
   flutter_test:

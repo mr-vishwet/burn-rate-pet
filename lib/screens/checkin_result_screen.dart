@@ -64,6 +64,43 @@ class CheckinResultScreen extends StatelessWidget {
       );
     }
 
+    // What Momo "noticed" comes from this check-in's actual answers —
+    // never from the score alone. Sleep 3+ is "Deep" or better;
+    // movement 2+ is "Some" or more.
+    int? answerFor(String id) {
+      final i = last.questionIds.indexOf(id);
+      if (i < 0 || i >= last.answers.length) return null;
+      return last.answers[i];
+    }
+
+    final sleep = answerFor('sleep');
+    final movement = answerFor('movement');
+    final sleptWell = sleep != null && sleep >= 3;
+    final moved = movement != null && movement >= 2;
+    final String liftedBy;
+    if (sleptWell && moved) {
+      liftedBy = 'Sleep and movement lifted today.';
+    } else if (sleptWell) {
+      liftedBy = 'Good sleep lifted today.';
+    } else if (moved) {
+      liftedBy = 'Movement lifted today.';
+    } else {
+      liftedBy = 'A strong day, honestly answered.';
+    }
+    final String noticed;
+    if (last.score < 70) {
+      noticed = 'today was heavy. Rest counts as a routine too.';
+    } else if (sleptWell && moved) {
+      noticed = 'you slept well and moved today.';
+    } else if (sleptWell) {
+      noticed = 'you slept well last night.';
+    } else if (moved) {
+      noticed = 'you moved today.';
+    } else {
+      noticed = 'today was a strong one, even without great sleep or '
+          'movement.';
+    }
+
     return AppScaffold(
       title: 'Check-in Result',
       body: SingleChildScrollView(
@@ -87,8 +124,7 @@ class CheckinResultScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               last.score >= 70
-                  ? 'Sleep and movement lifted today. Nothing to fix — '
-                      'just noticed.'
+                  ? '$liftedBy Nothing to fix — just noticed.'
                   : last.score >= 45
                       ? 'A middling day, honestly answered. Momo notes it '
                           'and stays close.'
@@ -127,8 +163,8 @@ class CheckinResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             FormulaCard(
-              mood: mood ?? 0,
-              routines: routines ?? 0,
+              mood: mood,
+              routines: routines,
               budget: budget,
             ),
             const SizedBox(height: 12),
@@ -142,7 +178,7 @@ class CheckinResultScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Momo noticed: ${last.score >= 70 ? 'you slept well and moved. That is most of the lift this week.' : 'today was heavy. Rest counts as a routine too.'}',
+                      'Momo noticed: $noticed',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),

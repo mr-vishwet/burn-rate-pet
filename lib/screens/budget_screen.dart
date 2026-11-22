@@ -179,27 +179,29 @@ class BudgetScreen extends StatelessWidget {
     MomoController controller,
   ) {
     final categories = controller.state.categories;
+    final currency = controller.state.currency;
     final rows = <Widget>[];
-    BudgetCategory? byName(String name) {
-      for (final c in categories) {
-        if (c.name == name) return c;
-      }
-      return null;
-    }
 
-    final food = byName('Food');
-    if (food != null) {
+    // One row per top category (biggest plan first): what if this
+    // category's plan were 10% tighter? Built from the user's own
+    // categories — no hardcoded names or amounts.
+    final byPlan = List<BudgetCategory>.of(categories)
+      ..sort((a, b) => b.plannedCents.compareTo(a.plannedCents));
+    for (final category in byPlan.take(3)) {
+      final tighter = (category.plannedCents * 0.9).round();
+      if (tighter <= 0 || tighter == category.plannedCents) continue;
       rows.add(
         SimulatorRow(
-          label: 'Food \$450/mo',
+          label:
+              '${category.name} ${formatMoney(tighter, currency)}/mo',
           score: simulateCategoryPlan(
             categories: categories,
-            categoryId: food.id,
-            newPlannedCents: 45000,
+            categoryId: category.id,
+            newPlannedCents: tighter,
           ),
           onTap: () => MomoScope.read(context).updateCategoryPlan(
-            food.id,
-            45000,
+            category.id,
+            tighter,
           ),
         ),
       );
@@ -207,54 +209,27 @@ class BudgetScreen extends StatelessWidget {
     rows.add(
       SimulatorRow(
         label:
-            '${formatMoney(controller.spentCents, controller.state.currency)} spent',
+            '${formatMoney(controller.spentCents, currency)} spent',
         score: controller.budgetScoreValue,
         isCurrent: true,
       ),
     );
-    final fun = byName('Fun');
-    if (fun != null) {
+    // The "under X total" row uses the user's own monthly goal (or the
+    // plan total when no goal is set).
+    final goal = controller.state.monthlyBudgetGoalCents > 0
+        ? controller.state.monthlyBudgetGoalCents
+        : controller.plannedCents;
+    if (goal > 0) {
       rows.add(
         SimulatorRow(
-          label: 'Fun \$300/mo',
-          score: simulateCategoryPlan(
+          label: 'Under ${formatMoney(goal, currency)}/mo total',
+          score: simulateTotalSpent(
             categories: categories,
-            categoryId: fun.id,
-            newPlannedCents: 30000,
-          ),
-          onTap: () => MomoScope.read(context).updateCategoryPlan(
-            fun.id,
-            30000,
+            newSpentCents: goal,
           ),
         ),
       );
     }
-    final home = byName('Home');
-    if (home != null) {
-      rows.add(
-        SimulatorRow(
-          label: 'Home \$1,300/mo',
-          score: simulateCategoryPlan(
-            categories: categories,
-            categoryId: home.id,
-            newPlannedCents: 130000,
-          ),
-          onTap: () => MomoScope.read(context).updateCategoryPlan(
-            home.id,
-            130000,
-          ),
-        ),
-      );
-    }
-    rows.add(
-      SimulatorRow(
-        label: 'Under \$2,200/mo total',
-        score: simulateTotalSpent(
-          categories: categories,
-          newSpentCents: 220000,
-        ),
-      ),
-    );
     rows.add(
       Padding(
         padding: const EdgeInsets.only(top: 8),
@@ -271,6 +246,7 @@ class BudgetScreen extends StatelessWidget {
   Future<void> _showAddExpense(BuildContext context) async {
     final controller = MomoScope.read(context);
     final categories = controller.state.categories;
+    final currency = controller.state.currency;
     var categoryId = categories.first.id;
     final amountController = TextEditingController();
     final noteController = TextEditingController();
@@ -295,10 +271,15 @@ class BudgetScreen extends StatelessWidget {
             const SizedBox(height: 12),
             TextField(
               controller: amountController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                prefixText: '\$ ',
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'^\d*\.?\d{0,2}'),
+                ),
+              ],
+              decoration: InputDecoration(
+                prefixText: '${currencySymbol(currency)} ',
                 labelText: 'Amount',
               ),
               autofocus: true,
@@ -325,11 +306,11 @@ class BudgetScreen extends StatelessWidget {
         ],
       ),
     );
-    final amount = int.tryParse(amountController.text.trim()) ?? 0;
-    if (result == true && amount > 0) {
+    final amountCents = parseMoneyToCents(amountController.text);
+    if (result == true && amountCents > 0) {
       await controller.addExpense(
         categoryId: categoryId,
-        amountCents: amount * 100,
+        amountCents: amountCents,
         note: noteController.text.trim().isEmpty
             ? 'Expense'
             : noteController.text.trim(),
@@ -344,8 +325,9 @@ class BudgetScreen extends StatelessWidget {
     BudgetCategory category,
   ) async {
     final controller = MomoScope.read(context);
+    final currency = controller.state.currency;
     final planController = TextEditingController(
-      text: (category.plannedCents ~/ 100).toString(),
+      text: moneyInputText(category.plannedCents),
     );
     final result = await showDialog<String>(
       context: context,
@@ -353,9 +335,15 @@ class BudgetScreen extends StatelessWidget {
         title: Text('${category.name} — monthly plan'),
         content: TextField(
           controller: planController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(prefixText: '\$ '),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+              RegExp(r'^\d*\.?\d{0,2}'),
+            ),
+          ],
+          decoration: InputDecoration(
+            prefixText: '${currencySymbol(currency)} ',
+          ),
           autofocus: true,
         ),
         actions: [
@@ -378,8 +366,8 @@ class BudgetScreen extends StatelessWidget {
       ),
     );
     if (result == 'save') {
-      final planned = int.tryParse(planController.text.trim()) ?? 0;
-      await controller.updateCategoryPlan(category.id, planned * 100);
+      final plannedCents = parseMoneyToCents(planController.text);
+      await controller.updateCategoryPlan(category.id, plannedCents);
     } else if (result == 'delete') {
       await controller.deleteCategory(category.id);
     }
@@ -388,6 +376,7 @@ class BudgetScreen extends StatelessWidget {
 
   Future<void> _showAddCategory(BuildContext context) async {
     final controller = MomoScope.read(context);
+    final currency = controller.state.currency;
     final nameController = TextEditingController();
     final planController = TextEditingController(text: '100');
     final result = await showDialog<bool>(
@@ -408,10 +397,15 @@ class BudgetScreen extends StatelessWidget {
             const SizedBox(height: 12),
             TextField(
               controller: planController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                prefixText: '\$ ',
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'^\d*\.?\d{0,2}'),
+                ),
+              ],
+              decoration: InputDecoration(
+                prefixText: '${currencySymbol(currency)} ',
                 labelText: 'Planned per month',
               ),
             ),
@@ -429,11 +423,11 @@ class BudgetScreen extends StatelessWidget {
         ],
       ),
     );
-    final planned = int.tryParse(planController.text.trim()) ?? 0;
+    final plannedCents = parseMoneyToCents(planController.text);
     if (result == true && nameController.text.trim().isNotEmpty) {
       await controller.addCategory(
         name: nameController.text.trim(),
-        plannedCents: planned * 100,
+        plannedCents: plannedCents,
       );
     }
     nameController.dispose();

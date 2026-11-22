@@ -6,8 +6,10 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
 
-/// 18 Milestone: 30 days of check-ins! Confetti, sunglasses Momo, and the
-/// numbers that prove it — plus every milestone, unlocked or still ahead.
+/// 18 Milestone: the latest milestone actually earned, with confetti and
+/// the numbers that prove it — plus every milestone, unlocked or still
+/// ahead. With nothing unlocked yet, the card says so honestly and shows
+/// the real check-in count so far.
 class MilestoneScreen extends StatelessWidget {
   /// Creates the milestone screen.
   const MilestoneScreen({super.key});
@@ -19,6 +21,10 @@ class MilestoneScreen extends StatelessWidget {
     final milestones = controller.state.milestones;
     final unlocked = milestones.where((m) => m.unlocked).toList();
     final locked = milestones.where((m) => !m.unlocked).toList();
+    // Headline milestone: the latest one actually earned (last in
+    // definition order). Nothing unlocked yet → no celebration claim.
+    final headline = unlocked.isEmpty ? null : unlocked.last;
+    final checkinDays = controller.checkinDays;
     return AppScaffold(
       title: 'Milestones',
       showBack: true,
@@ -61,7 +67,9 @@ class MilestoneScreen extends StatelessWidget {
                   const MomoAvatar(size: 110, mood: MomoMood.cheer),
                   const SizedBox(height: 12),
                   Text(
-                    '30 days of check-ins!',
+                    headline == null
+                        ? 'No milestones yet'
+                        : '${headline.title}!',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                     ),
@@ -69,8 +77,11 @@ class MilestoneScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'A full month of showing up for yourself. Confetti, '
-                    'sunglasses Momo, and the numbers that prove it.',
+                    headline == null
+                        ? 'Your first check-in unlocks the first one — '
+                            '$checkinDays check-in '
+                            '${checkinDays == 1 ? 'day' : 'days'} so far.'
+                        : headline.body,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.9),
                     ),

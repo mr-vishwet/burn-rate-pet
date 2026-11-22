@@ -1,9 +1,9 @@
 /// Insights: short, kind observations Momo draws from the user's own data.
 ///
 /// Every insight is computed from stored state — nothing is invented, and
-/// nothing references data the user hasn't entered (or that wasn't seeded
-/// as labelled demo content). Insights never guilt-trip: good news first,
-/// and every nudge is a suggestion, not a scolding.
+/// nothing references data the user hasn't entered. Insights never
+/// guilt-trip: good news first, and every nudge is a suggestion, not a
+/// scolding.
 class Insight {
   /// Creates an insight.
   const Insight({
@@ -38,6 +38,12 @@ enum InsightKind {
 ///
 /// All inputs are plain values so this stays pure and testable; the
 /// controller passes its current state in.
+///
+/// The movement insight needs check-in history: [movementDayScores] are
+/// the scores of check-ins on days the user moved (movement answer 2+,
+/// "Some" or more), [otherDayScores] the rest. It only appears when both
+/// lists are non-empty and movement days actually score higher — never
+/// as an unconditional claim.
 List<Insight> buildInsights({
   required int spentCents,
   required int lastMonthSpentCents,
@@ -48,6 +54,8 @@ List<Insight> buildInsights({
   required int routinesDoneToday,
   required int routinesTotal,
   required int checkinsThisMonth,
+  List<int>? movementDayScores,
+  List<int>? otherDayScores,
 }) {
   final insights = <Insight>[];
 
@@ -123,14 +131,31 @@ List<Insight> buildInsights({
     );
   }
 
-  insights.add(
-    const Insight(
-      title: 'Movement days lift the index',
-      body: 'On days you move, your check-ins trend higher. A short walk '
-          'counts — Momo will take any movement you offer.',
-      kind: InsightKind.tip,
-    ),
-  );
+  // Movement days: only claimed when the user's own check-ins back it
+  // up — movement days must average higher than other days, with real
+  // check-ins on both sides. No data, no claim.
+  if (movementDayScores != null &&
+      otherDayScores != null &&
+      movementDayScores.isNotEmpty &&
+      otherDayScores.isNotEmpty) {
+    final moveMean =
+        movementDayScores.reduce((a, b) => a + b) / movementDayScores.length;
+    final otherMean =
+        otherDayScores.reduce((a, b) => a + b) / otherDayScores.length;
+    final lift = (moveMean - otherMean).round();
+    if (lift > 0) {
+      insights.add(
+        Insight(
+          title: 'Movement days lift the index',
+          body:
+              'On days you move, your check-ins average '
+              '${moveMean.round()} vs ${otherMean.round()} on other days. '
+              'A short walk counts — Momo will take any movement you offer.',
+          kind: InsightKind.tip,
+        ),
+      );
+    }
+  }
 
   return insights;
 }

@@ -36,8 +36,9 @@ class AccountScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in or create an account to unlock sync and '
-                  'friend sharing. Your guest data moves over.',
+                  'Sign in or create an account for friend sharing. Your '
+                  'guest data moves over — sync across devices is coming '
+                  'in phase 2.',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -101,15 +102,21 @@ class AccountScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Sync'),
-                    subtitle: const Text(
-                      'v0.1: recorded locally. Real multi-device sync '
-                      'needs a backend — phase 2.',
+                  // Tappable tiles sit in their own Material so ink
+                  // splashes paint above the card's background (the
+                  // framework asserts otherwise).
+                  Material(
+                    color: Colors.transparent,
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Sync'),
+                      subtitle: const Text(
+                        'v0.1: recorded locally. Real multi-device sync '
+                        'needs a backend — phase 2.',
+                      ),
+                      value: state.syncOn,
+                      onChanged: (value) => controller.setSync(value),
                     ),
-                    value: state.syncOn,
-                    onChanged: (value) => controller.setSync(value),
                   ),
                   const Divider(color: AppTheme.hairline),
                   const ListTile(
@@ -119,26 +126,29 @@ class AccountScreen extends StatelessWidget {
                       color: AppTheme.peach,
                     ),
                     title: Text('This device'),
-                    subtitle: Text('Synced · just now'),
+                    subtitle: Text('Saved on this device'),
                     trailing: Icon(
                       Icons.check_circle,
                       color: AppTheme.green,
                     ),
                   ),
                   const Divider(color: AppTheme.hairline),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
-                      Icons.link_outlined,
-                      color: AppTheme.peach,
-                    ),
-                    title: const Text('Friend share'),
-                    subtitle: Text(
-                      controller.shareUrl ?? 'No link yet',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).pushNamed(
-                      AppRoutes.connected,
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.link_outlined,
+                        color: AppTheme.peach,
+                      ),
+                      title: const Text('Friend share'),
+                      subtitle: Text(
+                        controller.shareUrl ?? 'No link yet',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).pushNamed(
+                        AppRoutes.connected,
+                      ),
                     ),
                   ),
                 ],

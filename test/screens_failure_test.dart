@@ -30,7 +30,9 @@ Widget _testApp(MomoController controller, Widget screen) {
 }
 
 MomoController _failingController() => MomoController(
-  state: MomoState.seededDemo(now: DateTime.now()),
+  // Fresh first-run state: no seeded demo, no data — the check-in and
+  // verify flows create what they need.
+  state: MomoState.fresh(),
   store: StorageService(ThrowingStore()),
 );
 

@@ -93,17 +93,19 @@ class UpgradePromptScreen extends StatelessWidget {
                   SizedBox(height: 8),
                   _UpgradeRow(
                     icon: Icons.sync_outlined,
-                    text: 'Sync across devices',
+                    text: 'Sync across devices — coming in phase 2',
                   ),
                   SizedBox(height: 8),
                   _UpgradeRow(
                     icon: Icons.link_outlined,
-                    text: 'Your read-only share link, revocable any time',
+                    text: 'Your read-only share link — amounts always '
+                        'hidden',
                   ),
                   SizedBox(height: 8),
                   _UpgradeRow(
                     icon: Icons.backup_outlined,
-                    text: 'Backup — your pet survives a lost phone',
+                    text: 'Backup file — export your data, import it on a '
+                        'new phone',
                   ),
                 ],
               ),

@@ -1,10 +1,7 @@
 /// Canonical constants for Momo: the Happiness Index formula, the bands,
-/// and the seeded demo fixture from the V7 design.
-///
-/// The seeded numbers are DEMO content — labelled as demo wherever they
-/// show — and exist so a first launch has a living pet to meet. Real
-/// numbers replace them as the user checks in, keeps routines, and tracks
-/// their budget.
+/// and the budget score constants. First launch is fresh and empty — no
+/// demo content is seeded anywhere; every number the app shows comes from
+/// real activity.
 library;
 
 /// ---------------------------------------------------------------------------
@@ -62,73 +59,6 @@ const double kBudgetSlope = 48.0;
 
 /// Flat penalty per category that has gone over its plan.
 const int kBudgetOverCategoryPenalty = 15;
-
-/// ---------------------------------------------------------------------------
-/// Seeded demo fixture (SEEDED DEMO CONTENT — labelled as demo everywhere)
-/// ---------------------------------------------------------------------------
-///
-/// The V7 design's canonical numbers: index 75 (Content), from mood 76,
-/// routines 72, budget 78 — 76×40% + 72×35% + 78×25% = 75.1 → 75.
-/// Budget $2,400/mo across five categories, $1,936 spent, $464 left.
-/// Six routines, 5 of 6 done today, a 12-day streak on Morning workout.
-/// Index history 68 → 75 over six months (+7).
-///
-/// These are the product's demo story, not measured data. Clearing demo
-/// data (Data Controls) removes them; the formulas then run on real
-/// activity only.
-class DemoFixture {
-  /// Seeded component scores (0-100).
-  static const int moodScore = 76;
-
-  /// Seeded routine component score (0-100).
-  static const int routineScore = 72;
-
-  /// Seeded budget component score (0-100).
-  static const int budgetScore = 78;
-
-  /// Seeded Happiness Index (0-100).
-  static const int index = 75;
-
-  /// Seeded check-in scores for the last 7 days — they average exactly 76.
-  static const List<int> recentCheckinScores = [74, 76, 78, 75, 77, 76, 76];
-
-  /// Monthly budget in cents, and the five categories (name, planned, spent).
-  static const int monthlyPlannedCents = 240000;
-
-  /// Seeded total spent this month, in cents.
-  static const int monthlySpentCents = 193600;
-
-  /// Seeded total spent last month, in cents.
-  static const int lastMonthSpentCents = 210400; // this month is 8% lower
-
-  /// Seeded budget categories: (name, planned cents, spent cents).
-  static const List<(String, int, int)> categories = [
-    ('Food', 52000, 38600),
-    ('Transport', 18000, 14200),
-    ('Fun', 26000, 21400),
-    ('Home', 115000, 109800),
-    ('Health', 29000, 9600),
-  ];
-
-  /// The six seeded routines. The evening walk is today's miss.
-  static const List<String> routineNames = [
-    'Wake up',
-    'Morning workout',
-    'Deep work',
-    'Read',
-    'Evening walk',
-    'Lights out',
-  ];
-
-  /// Seeded streak (days) for Morning workout.
-  static const int workoutStreakDays = 12;
-
-  /// Six months of index history, oldest first: 68 → 75 (+7).
-  static const List<int> indexHistory = [68, 69, 70, 71, 73, 75];
-
-  /// Milestone: 30 days of check-ins.
-  static const int checkinMilestoneDays = 30;
-}
 
 /// Supported display currencies (code → symbol). Amounts are stored in
 /// minor units (cents); the currency only changes the label.

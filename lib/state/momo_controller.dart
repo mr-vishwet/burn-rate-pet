@@ -13,6 +13,23 @@ import '../engine/routines.dart';
 import '../services/storage_service.dart';
 import 'momo_state.dart';
 
+/// Thrown by [MomoController.load] when the stored state document exists
+/// but cannot be read — unparseable JSON, or valid JSON with the wrong
+/// shape (e.g. a partial write). The corrupt document is left exactly
+/// where it is: the app routes to the corrupt-state screen, which offers
+/// Restore from backup or Start fresh. Nothing is ever silently
+/// re-seeded or silently discarded.
+class CorruptStateException implements Exception {
+  /// Creates a corrupt-state failure with a human-readable [reason].
+  const CorruptStateException(this.reason);
+
+  /// Why the stored document could not be read.
+  final String reason;
+
+  @override
+  String toString() => 'CorruptStateException: $reason';
+}
+
 /// The app's single controller: owns the [MomoState], derives the Happiness
 /// Index and every screen's numbers from it, and persists every change.
 ///
@@ -23,31 +40,45 @@ class MomoController extends ChangeNotifier {
   MomoController({required this.state, required StorageService store})
     : _store = store;
 
-  /// Loads persisted state, or seeds the demo on first launch.
+  /// Loads persisted state, or starts fresh on first launch.
   ///
-  /// A corrupt stored document (unparseable JSON, or valid JSON with the
-  /// wrong shape — e.g. a partial write or an older schema) must never
-  /// strand the app: it re-seeds the demo and overwrites the corrupt
-  /// document, so the next launch loads cleanly.
+  /// - No stored document → [MomoState.fresh] (empty, persisted).
+  /// - A stored document → loaded as-is; a document from before month
+  ///   tracking has no `monthKey` and is treated as the current month,
+  ///   so nothing is reset on first load. If the stored month has
+  ///   passed, the monthly rollover runs (see [_rolloverIfNeeded]).
+  /// - A corrupt stored document (unparseable JSON, or valid JSON with
+  ///   the wrong shape) → throws [CorruptStateException] and leaves the
+  ///   document untouched. The caller routes to the corrupt-state
+  ///   screen; the app never silently re-seeds or discards.
   static Future<MomoController> load({
     required StorageService store,
   }) async {
     final raw = await store.read();
-    if (raw != null) {
-      try {
-        final state = MomoState.fromJson(
-          jsonDecode(raw) as Map<String, dynamic>,
-        );
-        return MomoController(state: state, store: store);
-      } on FormatException {
-        // Unparseable JSON — fall through and re-seed below.
-      } on TypeError {
-        // Valid JSON, wrong shape — same recovery.
-      }
+    if (raw == null) {
+      final controller = MomoController(
+        state: MomoState.fresh(),
+        store: store,
+      );
+      await controller._persist();
+      return controller;
     }
-    final state = MomoState.seededDemo(now: DateTime.now());
+    final MomoState state;
+    try {
+      state = MomoState.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } on FormatException {
+      throw const CorruptStateException(
+        'The saved data is not valid JSON.',
+      );
+    } on TypeError {
+      throw const CorruptStateException(
+        'The saved data has the wrong shape.',
+      );
+    }
     final controller = MomoController(state: state, store: store);
-    await controller._persist();
+    if (controller._rolloverIfNeeded()) {
+      await controller._persist();
+    }
     return controller;
   }
 
@@ -71,6 +102,36 @@ class MomoController extends ChangeNotifier {
     await change();
     await _persist();
     notifyListeners();
+  }
+
+  /// Monthly rollover: when the state's [MomoState.monthKey] is not the
+  /// current month, archives the closing month's totals (total + per
+  /// category) into the last-month fields and resets every category's
+  /// spent to 0 with the new month key. Returns true when a rollover
+  /// happened (the caller then persists).
+  ///
+  /// A state whose month key is already current is untouched, and a
+  /// document from before month tracking has its key stamped as the
+  /// current month at parse time, so the first load after the upgrade
+  /// never resets real totals.
+  bool _rolloverIfNeeded({DateTime? now}) {
+    final current = monthKeyFor(now ?? DateTime.now());
+    if (state.monthKey == current) return false;
+    state.lastMonthSpentCents = spentCents;
+    state.lastMonthCategories = state.categories
+        .map(
+          (c) => LastMonthCategorySpend(
+            id: c.id,
+            name: c.name,
+            spentCents: c.spentCents,
+          ),
+        )
+        .toList();
+    for (final category in state.categories) {
+      category.spentCents = 0;
+    }
+    state.monthKey = current;
+    return true;
   }
 
   // ------------------------------------------------------------------
@@ -163,24 +224,40 @@ class MomoController extends ChangeNotifier {
   /// Cents left this month (negative when over plan).
   int get leftCents => plannedCents - spentCents;
 
-  /// Distinct days with a check-in (demo + real).
+  /// Distinct days with a check-in.
   int get checkinDays =>
       state.checkins.map((c) => c.dayKey).toSet().length;
 
   /// Insights computed from the current numbers.
-  List<Insight> get insights => buildInsights(
-    spentCents: spentCents,
-    lastMonthSpentCents: state.lastMonthSpentCents,
-    indexNow: index ?? 0,
-    indexSixMonthsAgo: state.indexHistory.isEmpty
-        ? (index ?? 0)
-        : state.indexHistory.first.index,
-    bestStreakDays: bestStreak.days,
-    bestStreakRoutine: bestStreak.routine,
-    routinesDoneToday: routinesDoneTodayCount,
-    routinesTotal: state.routines.length,
-    checkinsThisMonth: checkinDays,
-  );
+  ///
+  /// The movement insight is fed real check-in history: scores split by
+  /// whether the movement answer was 2+ ("Some" or more). Demo entries
+  /// from old stored documents never count as real check-ins.
+  List<Insight> get insights {
+    final movementDayScores = <int>[];
+    final otherDayScores = <int>[];
+    for (final c in state.checkins) {
+      if (c.isDemo) continue;
+      final i = c.questionIds.indexOf('movement');
+      if (i < 0 || i >= c.answers.length) continue;
+      (c.answers[i] >= 2 ? movementDayScores : otherDayScores).add(c.score);
+    }
+    return buildInsights(
+      spentCents: spentCents,
+      lastMonthSpentCents: state.lastMonthSpentCents,
+      indexNow: index ?? 0,
+      indexSixMonthsAgo: state.indexHistory.isEmpty
+          ? (index ?? 0)
+          : state.indexHistory.first.index,
+      bestStreakDays: bestStreak.days,
+      bestStreakRoutine: bestStreak.routine,
+      routinesDoneToday: routinesDoneTodayCount,
+      routinesTotal: state.routines.length,
+      checkinsThisMonth: checkinDays,
+      movementDayScores: movementDayScores,
+      otherDayScores: otherDayScores,
+    );
+  }
 
   /// The widget-safe snapshot: index + band only, never amounts.
   ({int? index, String? bandLabel}) get widgetSnapshot =>
@@ -195,12 +272,15 @@ class MomoController extends ChangeNotifier {
     state.onboarded = true;
   });
 
-  /// Saves the Add Details step: monthly plan + categories. Replaces the
-  /// seeded categories with the user's own.
+  /// Saves the Add Details step: monthly plan + categories. Replaces any
+  /// existing categories with the user's own. Runs the monthly rollover
+  /// first, so a plan saved in a new month archives the old month's
+  /// totals before the categories are replaced.
   Future<void> saveDetails({
     required List<BudgetCategory> categories,
     required int monthlyBudgetGoalCents,
   }) => _mutate(() async {
+    _rolloverIfNeeded();
     state.categories = categories;
     state.monthlyBudgetGoalCents = monthlyBudgetGoalCents;
     state.detailsAdded = true;
@@ -362,11 +442,15 @@ class MomoController extends ChangeNotifier {
   // ------------------------------------------------------------------
 
   /// Logs an expense: adds it to the list and to the category's spent.
+  /// Runs the monthly rollover first, so an expense logged in a new
+  /// month lands in the new month (an app left open across a month
+  /// boundary still rolls over correctly).
   Future<void> addExpense({
     required String categoryId,
     required int amountCents,
     required String note,
   }) => _mutate(() async {
+    _rolloverIfNeeded();
     final category =
         state.categories.firstWhere((c) => c.id == categoryId);
     category.spentCents += amountCents;
@@ -423,15 +507,9 @@ class MomoController extends ChangeNotifier {
   // Settings + companion
   // ------------------------------------------------------------------
 
-  /// Updates settings.
-  Future<void> updateSettings({
-    String? currency,
-    bool? nudgesEnabled,
-    bool? kindnessMode,
-  }) => _mutate(() async {
+  /// Updates settings (display currency).
+  Future<void> updateSettings({String? currency}) => _mutate(() async {
     if (currency != null) state.currency = currency;
-    if (nudgesEnabled != null) state.nudgesEnabled = nudgesEnabled;
-    if (kindnessMode != null) state.kindnessMode = kindnessMode;
   });
 
   /// Renames the pet.
@@ -439,17 +517,9 @@ class MomoController extends ChangeNotifier {
     state.petName = name.trim().isEmpty ? 'Momo' : name.trim();
   });
 
-  /// Toggles the floating bubble / widget / lock-screen check-ins.
-  Future<void> setCompanion({
-    bool? bubbleEnabled,
-    bool? widgetEnabled,
-    bool? lockCheckinsEnabled,
-  }) => _mutate(() async {
+  /// Toggles the floating companion bubble (in-app).
+  Future<void> setCompanion({bool? bubbleEnabled}) => _mutate(() async {
     if (bubbleEnabled != null) state.bubbleEnabled = bubbleEnabled;
-    if (widgetEnabled != null) state.widgetEnabled = widgetEnabled;
-    if (lockCheckinsEnabled != null) {
-      state.lockCheckinsEnabled = lockCheckinsEnabled;
-    }
   });
 
   // ------------------------------------------------------------------
@@ -544,37 +614,23 @@ class MomoController extends ChangeNotifier {
   // Data controls
   // ------------------------------------------------------------------
 
-  /// Removes the seeded demo content, keeping settings, account and pet
-  /// name. The formulas then run on real activity only.
-  Future<void> clearDemoData() async {
-    final freshMilestones = MomoState.fresh().milestones;
-    await _mutate(() async {
-      state.checkins = [];
-      state.routines = [];
-      state.categories = [];
-      state.expenses = [];
-      state.lastMonthSpentCents = 0;
-      state.indexHistory = [];
-      state.milestones = freshMilestones;
-      state.demoSeeded = false;
-      state.onboarded = true;
-      state.detailsAdded = true;
-    });
-  }
+  /// Replaces the current state with an imported backup, exactly as
+  /// parsed — no rollover, no merging. The caller (the import confirm
+  /// screen) has already shown the user what will be replaced and got
+  /// their confirmation. Persists and notifies.
+  Future<void> importState(MomoState imported) => _mutate(() async {
+    state.replaceWith(imported);
+  });
 
   /// Deletes everything: back to a fresh install (onboarding runs again,
-  /// and the demo re-seeds on next launch, as on any fresh install).
+  /// and a fresh empty state is created on next launch). The stored
+  /// document is removed, not overwritten with an empty one.
   Future<void> deleteAllData() async {
     state.onboarded = false;
     state.detailsAdded = false;
-    state.demoSeeded = false;
     state.petName = 'Momo';
     state.currency = 'USD';
-    state.nudgesEnabled = true;
-    state.kindnessMode = true;
     state.bubbleEnabled = true;
-    state.widgetEnabled = true;
-    state.lockCheckinsEnabled = true;
     state.authMode = AuthMode.guest;
     state.email = null;
     state.displayName = null;
@@ -584,7 +640,9 @@ class MomoController extends ChangeNotifier {
     state.routines = [];
     state.categories = [];
     state.expenses = [];
+    state.monthKey = monthKeyFor(DateTime.now());
     state.lastMonthSpentCents = 0;
+    state.lastMonthCategories = [];
     state.indexHistory = [];
     state.milestones = MomoState.fresh().milestones;
     state.happinessGoal = 80;

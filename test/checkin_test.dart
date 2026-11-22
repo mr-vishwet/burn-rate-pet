@@ -52,7 +52,7 @@ void main() {
   });
 
   group('moodScoreFromRecent', () {
-    test('seeded week averages exactly 76', () {
+    test('a week of scores averages to the mean', () {
       expect(
         moodScoreFromRecent([74, 76, 78, 75, 77, 76, 76]),
         76,

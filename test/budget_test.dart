@@ -3,7 +3,7 @@ import 'package:momo/engine/budget.dart';
 
 void main() {
   group('budgetScore', () {
-    test('seeded demo month scores 78', () {
+    test('a month 80.7% spent, no category over plan, scores 78', () {
       expect(
         budgetScore(
           spentCents: 193600,

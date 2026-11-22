@@ -43,11 +43,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (controller.state.demoSeeded)
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: DemoChip(),
-              ),
             if (index == null || band == null) ...[
               const _FirstIndexCard(),
             ] else ...[

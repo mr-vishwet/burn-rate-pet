@@ -7,8 +7,8 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
 
-/// 19 Settings: currency, nudges, Momo's name, bands, kindness — About
-/// folded in below, plus the screen atlas and demo-data controls.
+/// 19 Settings: currency, Momo's name, bands — About folded in below,
+/// plus the screen atlas.
 class SettingsScreen extends StatelessWidget {
   /// Creates the settings screen.
   const SettingsScreen({super.key});
@@ -56,27 +56,6 @@ class SettingsScreen extends StatelessWidget {
                       },
                     ),
                   ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Gentle nudges'),
-                    subtitle: const Text(
-                      'One Sunday nudge, check-in reminders. Never more.',
-                    ),
-                    value: state.nudgesEnabled,
-                    onChanged: (value) => controller.updateSettings(
-                      nudgesEnabled: value,
-                    ),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Kindness mode'),
-                    subtitle: const Text(
-                      'Misses are met kindly, never guilt-trippy.',
-                    ),
-                    value: state.kindnessMode,
-                    onChanged: (value) =>
-                        controller.updateSettings(kindnessMode: value),
-                  ),
                 ],
               ),
             ),
@@ -103,21 +82,6 @@ class SettingsScreen extends StatelessWidget {
                     value: state.bubbleEnabled,
                     onChanged: (value) =>
                         controller.setCompanion(bubbleEnabled: value),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Home-screen widget'),
-                    value: state.widgetEnabled,
-                    onChanged: (value) =>
-                        controller.setCompanion(widgetEnabled: value),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Lock-screen check-ins'),
-                    value: state.lockCheckinsEnabled,
-                    onChanged: (value) => controller.setCompanion(
-                      lockCheckinsEnabled: value,
-                    ),
                   ),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -170,7 +134,7 @@ class SettingsScreen extends StatelessWidget {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Data controls'),
-                    subtitle: const Text('Export, sign out, delete'),
+                    subtitle: const Text('Export, import, delete'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => Navigator.of(context).pushNamed(
                       AppRoutes.dataControls,
@@ -205,59 +169,6 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            if (state.demoSeeded) ...[
-              const SizedBox(height: 20),
-              const Kicker('Demo data'),
-              const SizedBox(height: 12),
-              GlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'This install shows seeded demo content — the V7 '
-                      'design numbers — so you can meet a living pet '
-                      'first.',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Clear demo data?'),
-                            content: const Text(
-                              'Removes the seeded check-ins, routines, '
-                              'budget, and history. Your settings and '
-                              'account stay. The formulas then run on '
-                              'real activity only.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: const Text('Keep demo'),
-                              ),
-                              FilledButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: const Text('Clear demo data'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true && context.mounted) {
-                          await MomoScope.read(
-                            context,
-                          ).clearDemoData();
-                        }
-                      },
-                      child: const Text('Clear demo data'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
             const SizedBox(height: 20),
             ExpansionTile(
               title: const Text('All screens'),

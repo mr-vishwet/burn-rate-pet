@@ -33,7 +33,7 @@ class _GoalSetterScreenState extends State<GoalSetterScreen> {
     _initialised = true;
     final controller = MomoScope.read(context);
     _budgetController.text =
-        (controller.state.monthlyBudgetGoalCents ~/ 100).toString();
+        moneyInputText(controller.state.monthlyBudgetGoalCents);
     _happinessGoal = controller.state.happinessGoal.toDouble();
   }
 
@@ -48,8 +48,22 @@ class _GoalSetterScreenState extends State<GoalSetterScreen> {
     final controller = MomoScope.of(context);
     final theme = Theme.of(context);
     final currency = controller.state.currency;
-    final budgetGoal =
-        (int.tryParse(_budgetController.text.trim()) ?? 0) * 100;
+    final budgetGoal = parseMoneyToCents(_budgetController.text);
+    // Goal presets come from the user's own monthly plan: the plan
+    // itself, and 10% either side — never hardcoded amounts.
+    final plan = controller.state.monthlyBudgetGoalCents > 0
+        ? controller.state.monthlyBudgetGoalCents
+        : controller.plannedCents;
+    int roundToDollar(int cents) => (cents / 100).round() * 100;
+    final suggestions = <int>{
+      if (plan > 0) ...[
+        roundToDollar(plan),
+        roundToDollar((plan * 0.9).round()),
+        roundToDollar((plan * 1.1).round()),
+      ],
+    }.where((s) => s > 0).toList()
+      ..sort();
+    final offer = plan > 0 ? roundToDollar((plan * 0.9).round()) : 0;
     // Live projection: if spending landed on the goal, what would the
     // budget score (and the index) be?
     final projectedBudget = simulateTotalSpent(
@@ -104,40 +118,52 @@ class _GoalSetterScreenState extends State<GoalSetterScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _budgetController,
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
                     ],
-                    decoration: const InputDecoration(
-                      prefixText: '\$ ',
+                    decoration: InputDecoration(
+                      prefixText: '${currencySymbol(currency)} ',
                       labelText: 'A month that feels right',
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final suggestion in [220000, 240000, 200000])
-                        ActionChip(
-                          label: Text(
-                            formatMoney(suggestion, currency),
+                  if (suggestions.isEmpty)
+                    Text(
+                      'Set your categories first — Momo will suggest goals '
+                      'from your own plan.',
+                      style: theme.textTheme.bodySmall,
+                    )
+                  else
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final suggestion in suggestions)
+                          ActionChip(
+                            label: Text(
+                              formatMoney(suggestion, currency),
+                            ),
+                            onPressed: () {
+                              _budgetController.text =
+                                  moneyInputText(suggestion);
+                              setState(() {});
+                            },
                           ),
-                          onPressed: () {
-                            _budgetController.text =
-                                (suggestion ~/ 100).toString();
-                            setState(() {});
-                          },
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Momo offers ${formatMoney(220000, currency)}: staying '
-                    'under it would lift your budget score to '
-                    '${simulateTotalSpent(categories: controller.state.categories, newSpentCents: 220000)}.',
-                    style: theme.textTheme.bodySmall,
-                  ),
+                      ],
+                    ),
+                  if (offer > 0) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Momo offers ${formatMoney(offer, currency)}: staying '
+                      'under it would lift your budget score to '
+                      '${simulateTotalSpent(categories: controller.state.categories, newSpentCents: offer)}.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),

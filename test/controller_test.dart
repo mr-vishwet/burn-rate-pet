@@ -2,50 +2,49 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:momo/core/format.dart';
-import 'package:momo/engine/happiness.dart';
 import 'package:momo/engine/routines.dart';
 import 'package:momo/services/storage_service.dart';
 import 'package:momo/state/momo_controller.dart';
 import 'package:momo/state/momo_state.dart';
 
 void main() {
-  group('MomoController seeded demo', () {
-    late MomoController controller;
-
-    setUp(() async {
-      controller = await MomoController.load(
+  group('MomoController first launch', () {
+    test('first launch is fresh and empty: no index, no data', () async {
+      final controller = await MomoController.load(
         store: StorageService(MemoryStore()),
+      );
+      expect(controller.state.checkins, isEmpty);
+      expect(controller.state.routines, isEmpty);
+      expect(controller.state.categories, isEmpty);
+      expect(controller.state.expenses, isEmpty);
+      expect(controller.state.indexHistory, isEmpty);
+      expect(controller.state.onboarded, isFalse);
+      expect(controller.moodScore, isNull);
+      expect(controller.routineScoreValue, isNull);
+      expect(controller.index, isNull);
+      expect(controller.band, isNull);
+      expect(controller.spentCents, 0);
+      expect(controller.plannedCents, 0);
+      // The fresh state belongs to the current month.
+      expect(
+        controller.state.monthKey,
+        monthKeyFor(DateTime.now()),
+      );
+      // The milestones exist, locked, waiting to be earned.
+      expect(controller.state.milestones.length, 5);
+      expect(
+        controller.state.milestones.every((m) => !m.unlocked),
+        isTrue,
       );
     });
 
-    test('first launch seeds the demo: index 75, Content band', () {
-      expect(controller.state.demoSeeded, isTrue);
-      expect(controller.moodScore, 76);
-      expect(controller.routineScoreValue, 72);
-      expect(controller.budgetScoreValue, 78);
-      expect(controller.indexRaw, closeTo(75.1, 0.001));
-      expect(controller.index, 75);
-      expect(controller.band, HappinessBand.content);
-    });
-
-    test('seeded budget is \$2,400 planned, \$1,936 spent', () {
-      expect(controller.plannedCents, 240000);
-      expect(controller.spentCents, 193600);
-      expect(controller.leftCents, 46400);
-      expect(controller.state.categories.length, 5);
-    });
-
-    test('seeded routines: 6 routines, 5 of 6 done today', () {
-      expect(controller.state.routines.length, 6);
-      expect(controller.routinesDoneTodayCount, 5);
-      expect(controller.bestStreak.days, 12);
-      expect(controller.bestStreak.routine, 'Morning workout');
-    });
-
-    test('seeded history climbs 68 -> 75', () {
-      expect(controller.state.indexHistory.length, 6);
-      expect(controller.state.indexHistory.first.index, 68);
-      expect(controller.state.indexHistory.last.index, 75);
+    test('first launch persists the fresh state', () async {
+      final store = StorageService(MemoryStore());
+      await MomoController.load(store: store);
+      final reloaded = await MomoController.load(store: store);
+      expect(reloaded.state.checkins, isEmpty);
+      expect(reloaded.state.onboarded, isFalse);
+      expect(reloaded.index, isNull);
     });
 
     test('state persists and reloads identically', () async {
@@ -54,7 +53,7 @@ void main() {
       await first.renamePet('Pip');
       final second = await MomoController.load(store: store);
       expect(second.state.petName, 'Pip');
-      expect(second.index, 75);
+      expect(second.index, isNull);
     });
   });
 
@@ -68,55 +67,82 @@ void main() {
     });
 
     test('submitting a check-in updates the mood component', () async {
-      final before = controller.moodScore;
+      expect(controller.moodScore, isNull);
       await controller.submitCheckin(
         questionIds: List.generate(10, (i) => 'q$i'),
         answers: List.filled(10, 4),
       );
       expect(controller.lastCheckin?.score, 100);
-      expect(controller.moodScore, isNot(before));
+      expect(controller.moodScore, 100);
       expect(controller.checkinDueToday, isFalse);
+      // Still no index: routines are missing (never invent a number).
+      expect(controller.index, isNull);
     });
 
     test('toggling a routine grows its streak by one', () async {
-      final routine = controller.state.routines.firstWhere(
-        (r) => r.name == 'Evening walk',
+      controller.state.routines.add(
+        Routine(
+          id: 'r-walk',
+          name: 'Evening walk',
+          timeLabel: '6:30 PM',
+          completions: {
+            dayKey(DateTime.now().subtract(const Duration(days: 1))),
+          },
+          streakDays: 3,
+          lastCompletedKey: dayKey(
+            DateTime.now().subtract(const Duration(days: 1)),
+          ),
+        ),
       );
-      final before = routine.streakDays;
+      final routine = controller.state.routines.first;
       await controller.toggleRoutineDone(routine.id);
-      expect(routine.streakDays, before + 1);
-      expect(controller.routinesDoneTodayCount, 6);
+      expect(routine.streakDays, 4);
+      expect(controller.routinesDoneTodayCount, 1);
     });
 
     test('undoing a routine reverts the streak increment', () async {
-      final routine = controller.state.routines.firstWhere(
-        (r) => r.name == 'Evening walk',
+      final yesterday = dayKey(
+        DateTime.now().subtract(const Duration(days: 1)),
       );
-      expect(routine.streakDays, 3);
+      controller.state.routines.add(
+        Routine(
+          id: 'r-walk',
+          name: 'Evening walk',
+          timeLabel: '6:30 PM',
+          completions: {yesterday},
+          streakDays: 3,
+          lastCompletedKey: yesterday,
+        ),
+      );
+      final routine = controller.state.routines.first;
       await controller.toggleRoutineDone(routine.id);
       expect(routine.streakDays, 4);
-      expect(controller.routinesDoneTodayCount, 6);
+      expect(controller.routinesDoneTodayCount, 1);
       await controller.toggleRoutineDone(routine.id);
       expect(routine.streakDays, 3);
-      expect(controller.routinesDoneTodayCount, 5);
-      expect(
-        routine.lastCompletedKey,
-        dayKey(DateTime.now().subtract(const Duration(days: 1))),
-      );
+      expect(controller.routinesDoneTodayCount, 0);
+      expect(routine.lastCompletedKey, yesterday);
     });
 
     test('undoing a routine done today drops its streak by one', () async {
-      final routine = controller.state.routines.firstWhere(
-        (r) => r.name == 'Wake up',
+      final yesterday = dayKey(
+        DateTime.now().subtract(const Duration(days: 1)),
       );
-      expect(routine.streakDays, 8);
+      controller.state.routines.add(
+        Routine(
+          id: 'r-wake',
+          name: 'Wake up',
+          timeLabel: '7:00 AM',
+          completions: {yesterday, dayKey(DateTime.now())},
+          streakDays: 8,
+          lastCompletedKey: dayKey(DateTime.now()),
+        ),
+      );
+      final routine = controller.state.routines.first;
       await controller.toggleRoutineDone(routine.id);
       expect(routine.streakDays, 7);
-      expect(controller.routinesDoneTodayCount, 4);
-      expect(
-        routine.lastCompletedKey,
-        dayKey(DateTime.now().subtract(const Duration(days: 1))),
-      );
+      expect(controller.routinesDoneTodayCount, 0);
+      expect(routine.lastCompletedKey, yesterday);
     });
 
     test(
@@ -126,51 +152,45 @@ void main() {
         // State as persisted by the pre-fix build: the old undo removed
         // today's completion but left the incremented streak and a
         // last-completed day of today. Reproduced through the real
-        // storage round-trip, as the live site loads it — the seeded
-        // Evening walk starts at 3, the earlier session left it at 4.
-        final store = StorageService(MemoryStore());
-        await MomoController.load(store: store);
-        final doc =
-            jsonDecode(await store.read() ?? '') as Map<String, dynamic>;
-        final routines = doc['routines'] as List<dynamic>;
-        final evening = routines.firstWhere(
-          (r) => (r as Map<String, dynamic>)['name'] == 'Evening walk',
-        ) as Map<String, dynamic>;
-        evening['streakDays'] = 4;
-        evening['lastCompletedKey'] = dayKey(DateTime.now());
-        // Today is already absent from Evening walk's completions (the
-        // seeded miss); the stale last-completed day is the legacy part.
-        expect(
-          (evening['completions'] as List<dynamic>)
-              .contains(dayKey(DateTime.now())),
-          isFalse,
+        // storage round-trip, as the live site loads it — an explicit
+        // fixture routine, not seeded data.
+        final yesterday = dayKey(
+          DateTime.now().subtract(const Duration(days: 1)),
         );
+        final twoDaysAgo = dayKey(
+          DateTime.now().subtract(const Duration(days: 2)),
+        );
+        final store = StorageService(MemoryStore());
+        final doc = MomoState(
+          routines: [
+            Routine(
+              id: 'r-walk',
+              name: 'Evening walk',
+              timeLabel: '6:30 PM',
+              completions: {twoDaysAgo, yesterday},
+              streakDays: 4,
+              lastCompletedKey: dayKey(DateTime.now()),
+            ),
+          ],
+        ).toJson();
         await store.write(jsonEncode(doc));
 
         final legacy = await MomoController.load(store: store);
-        final routine = legacy.state.routines.firstWhere(
-          (r) => r.name == 'Evening walk',
-        );
+        final routine = legacy.state.routines.first;
         expect(routine.streakDays, 4);
-        expect(legacy.routinesDoneTodayCount, 5);
+        expect(legacy.routinesDoneTodayCount, 0);
 
         await legacy.toggleRoutineDone(routine.id);
         expect(routine.streakDays, 5);
-        expect(legacy.routinesDoneTodayCount, 6);
+        expect(legacy.routinesDoneTodayCount, 1);
         await legacy.toggleRoutineDone(routine.id);
         expect(routine.streakDays, 4);
-        expect(legacy.routinesDoneTodayCount, 5);
-        expect(
-          routine.lastCompletedKey,
-          dayKey(DateTime.now().subtract(const Duration(days: 1))),
-        );
+        expect(legacy.routinesDoneTodayCount, 0);
+        expect(routine.lastCompletedKey, yesterday);
 
         // And it persists: a reload still shows 4, not 3.
         final reloaded = await MomoController.load(store: store);
-        final reloadedEvening = reloaded.state.routines.firstWhere(
-          (r) => r.name == 'Evening walk',
-        );
-        expect(reloadedEvening.streakDays, 4);
+        expect(reloaded.state.routines.first.streakDays, 4);
       },
     );
 
@@ -205,9 +225,14 @@ void main() {
     );
 
     test('logging an expense moves spent and the budget score', () async {
+      await controller.addCategory(
+        name: 'Food',
+        plannedCents: 50000,
+      );
+      final categoryId = controller.state.categories.first.id;
       final before = controller.spentCents;
       await controller.addExpense(
-        categoryId: 'cat-0',
+        categoryId: categoryId,
         amountCents: 10000,
         note: 'Test shop',
       );
@@ -215,13 +240,44 @@ void main() {
       expect(controller.state.expenses.first.note, 'Test shop');
     });
 
-    test('clearing demo data leaves no invented index', () async {
-      await controller.clearDemoData();
-      expect(controller.state.demoSeeded, isFalse);
-      expect(controller.moodScore, isNull);
-      expect(controller.routineScoreValue, isNull);
-      expect(controller.index, isNull);
-      expect(controller.state.petName, 'Momo');
+    test('delete-all-data returns the app to a fresh install', () async {
+      final store = StorageService(MemoryStore());
+      final owned = await MomoController.load(store: store);
+      await owned.submitCheckin(
+        questionIds: List.generate(10, (i) => 'q$i'),
+        answers: List.filled(10, 3),
+      );
+      await owned.addRoutine(name: 'Read', timeLabel: '1:00 PM');
+      await owned.addCategory(name: 'Food', plannedCents: 50000);
+      await owned.renamePet('Pip');
+      expect(owned.state.checkins, isNotEmpty);
+      expect(owned.state.petName, 'Pip');
+
+      await owned.deleteAllData();
+      expect(owned.state.checkins, isEmpty);
+      expect(owned.state.routines, isEmpty);
+      expect(owned.state.categories, isEmpty);
+      expect(owned.state.expenses, isEmpty);
+      expect(owned.state.indexHistory, isEmpty);
+      expect(owned.state.petName, 'Momo');
+      expect(owned.state.onboarded, isFalse);
+      expect(owned.moodScore, isNull);
+      expect(owned.index, isNull);
+
+      // The stored document is removed, not overwritten: the next load
+      // is a fresh install.
+      expect(await store.read(), isNull);
+      final reloaded = await MomoController.load(store: store);
+      expect(reloaded.state.onboarded, isFalse);
+      expect(reloaded.index, isNull);
+    });
+
+    test('setCompanion toggles the in-app bubble', () async {
+      expect(controller.state.bubbleEnabled, isTrue);
+      await controller.setCompanion(bubbleEnabled: false);
+      expect(controller.state.bubbleEnabled, isFalse);
+      await controller.setCompanion(bubbleEnabled: true);
+      expect(controller.state.bubbleEnabled, isTrue);
     });
 
     test('sign-in flow creates a local account', () async {
@@ -251,46 +307,65 @@ void main() {
       expect(decoded['petName'], 'Momo');
       expect(decoded['categories'], isA<List<dynamic>>());
       expect(decoded['checkins'], isA<List<dynamic>>());
+      expect(decoded['version'], 1);
     });
   });
 
   group('MomoController corrupt stored state', () {
-    test('garbage JSON re-seeds the demo instead of throwing', () async {
+    test('garbage JSON throws CorruptStateException', () async {
       final store = StorageService(
         MemoryStore({StorageService.stateKey: 'not json {{{'}),
       );
-      final controller = await MomoController.load(store: store);
-      expect(controller.state.demoSeeded, isTrue);
-      expect(controller.index, 75);
+      await expectLater(
+        MomoController.load(store: store),
+        throwsA(isA<CorruptStateException>()),
+      );
     });
 
-    test('valid JSON with the wrong shape re-seeds the demo', () async {
+    test('valid JSON with the wrong shape throws CorruptStateException',
+        () async {
       final store = StorageService(
         MemoryStore({
           StorageService.stateKey: '{"checkins": "nope", "routines": 42}',
         }),
       );
-      final controller = await MomoController.load(store: store);
-      expect(controller.state.demoSeeded, isTrue);
-      expect(controller.index, 75);
+      await expectLater(
+        MomoController.load(store: store),
+        throwsA(isA<CorruptStateException>()),
+      );
     });
 
-    test('recovery overwrites the corrupt document with valid JSON',
+    test('a JSON array (not an object) throws CorruptStateException',
         () async {
       final store = StorageService(
-        MemoryStore({StorageService.stateKey: 'garbage {{{'}),
+        MemoryStore({StorageService.stateKey: '[1, 2, 3]'}),
       );
-      await MomoController.load(store: store);
-      final reloaded = await MomoController.load(store: store);
-      expect(reloaded.index, 75);
-      expect(reloaded.state.demoSeeded, isTrue);
+      await expectLater(
+        MomoController.load(store: store),
+        throwsA(isA<CorruptStateException>()),
+      );
+    });
+
+    test('a corrupt document is left untouched after a failed load',
+        () async {
+      const garbage = 'garbage {{{';
+      final store = StorageService(
+        MemoryStore({StorageService.stateKey: garbage}),
+      );
+      await expectLater(
+        MomoController.load(store: store),
+        throwsA(isA<CorruptStateException>()),
+      );
+      // Never silently re-seeded, never silently discarded: the document
+      // is still exactly what it was, for the user to decide about.
+      expect(await store.read(), garbage);
     });
   });
 
   group('MomoController storage failure', () {
     test('a failed verify keeps the pending sign-in for a retry', () async {
       final controller = MomoController(
-        state: MomoState.seededDemo(now: DateTime.now()),
+        state: MomoState.fresh(),
         store: StorageService(_ThrowingStore()),
       );
       await controller.beginCreateAccount(

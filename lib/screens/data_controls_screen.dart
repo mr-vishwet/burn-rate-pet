@@ -4,10 +4,13 @@ import 'package:flutter/services.dart';
 import '../app_routes.dart';
 import '../core/theme.dart';
 import '../services/export_service.dart';
+import '../services/import_service.dart';
 import '../state/momo_scope.dart';
+import '../state/momo_state.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/momo_avatar.dart';
+import 'import_confirm_screen.dart';
 
 /// 30 Data Controls: export everything, sign out, or delete — no guilt,
 /// no dark patterns.
@@ -122,6 +125,27 @@ class DataControlsScreen extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            GlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Kicker('Import'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Restore a backup you exported earlier. You will see '
+                    'what is in it before anything is replaced — importing '
+                    'replaces your current Momo completely.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton(
+                    onPressed: () => _importBackup(context),
+                    child: const Text('Import backup'),
                   ),
                 ],
               ),
@@ -269,5 +293,53 @@ class DataControlsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Backup import: pick a file, parse it, and show the confirm screen
+  /// — the current data is only replaced after the user confirms there.
+  /// A bad file is a message, never a crash; cancelling the picker does
+  /// nothing.
+  Future<void> _importBackup(BuildContext context) async {
+    final String? text;
+    try {
+      text = await ImportService.pickBackupText();
+    } on ImportFormatException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (text == null) return; // User cancelled the picker.
+    final MomoState imported;
+    try {
+      imported = ImportService.parseBackup(text);
+    } on ImportFormatException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!context.mounted) return;
+    final controller = MomoScope.read(context);
+    final state = controller.state;
+    final restored = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => ImportConfirmScreen(
+          imported: imported,
+          currentDescription:
+              'Your current Momo has ${state.checkins.length} check-ins, '
+              '${state.routines.length} routines, and '
+              '${state.categories.length} budget categories.',
+          onConfirm: () => controller.importState(imported),
+        ),
+      ),
+    );
+    if (restored == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Backup restored. Welcome back.')),
+      );
+    }
   }
 }

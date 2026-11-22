@@ -108,8 +108,8 @@ class ConnectedScreen extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  'New link generated. The old one stops '
-                                  'working.',
+                                  'New link generated. Share this one '
+                                  'instead.',
                                 ),
                               ),
                             );
@@ -136,7 +136,7 @@ class ConnectedScreen extends StatelessWidget {
                       color: AppTheme.peach,
                     ),
                     title: Text('This device'),
-                    subtitle: Text('Synced · just now'),
+                    subtitle: Text('Saved on this device'),
                     trailing: Icon(
                       Icons.check_circle,
                       color: AppTheme.green,

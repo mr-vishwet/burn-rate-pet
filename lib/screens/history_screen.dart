@@ -6,8 +6,8 @@ import '../state/momo_scope.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/glass_card.dart';
 
-/// 16 History: check-ins, streaks, and the index climb — six months of
-/// entries, the +7 story beside them.
+/// 16 History: check-ins, last month's spend, and the index climb —
+/// months of entries, the story beside them.
 class HistoryScreen extends StatelessWidget {
   /// Creates the history screen.
   const HistoryScreen({super.key});
@@ -18,6 +18,7 @@ class HistoryScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final history = controller.state.indexHistory;
     final checkins = controller.state.checkins.reversed.toList();
+    final lastMonth = controller.state.lastMonthCategories;
     final climb = history.length >= 2
         ? history.last.index - history.first.index
         : 0;
@@ -113,6 +114,57 @@ class HistoryScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            if (lastMonth.isNotEmpty) ...[
+              GlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Kicker('Last month'),
+                        const Spacer(),
+                        Text(
+                          formatMoney(
+                            controller.state.lastMonthSpentCents,
+                            controller.state.currency,
+                          ),
+                          style: AppTheme.monoNumbers(
+                            size: 18,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    for (final entry in lastMonth)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                entry.name,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                            Text(
+                              formatMoney(
+                                entry.spentCents,
+                                controller.state.currency,
+                              ),
+                              style: AppTheme.monoNumbers(
+                                size: 14,
+                                weight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             const Kicker('Recent check-ins'),
             const SizedBox(height: 12),
             if (checkins.isEmpty)
@@ -142,7 +194,7 @@ class HistoryScreen extends StatelessWidget {
                         ),
                         title: Text(formatDayKey(entry.dayKey)),
                         subtitle: Text(
-                          entry.isDemo ? 'Seeded demo' : 'Your check-in',
+                          'Your check-in',
                           style: theme.textTheme.bodySmall,
                         ),
                         trailing: Text(
