@@ -290,9 +290,19 @@ class MomoController extends ChangeNotifier {
   /// today's completion, and the last-completed day goes back to the
   /// most recent remaining completion. Undoing never punishes beyond
   /// the revert — the streak is never zeroed by a miss.
+  ///
+  /// The last-completed day is re-derived from the completions set
+  /// before toggling: persisted state written before the streak-undo
+  /// fix can hold a stale "today" there (the old undo removed today's
+  /// completion without resetting it), and in that state completing
+  /// today grows nothing — [nextStreak] reads "already done today" —
+  /// while undoing still decrements, so each toggle cycle loses a
+  /// day. The completions set is the source of truth.
   Future<void> toggleRoutineDone(String routineId) => _mutate(() async {
     final routine = state.routines.firstWhere((r) => r.id == routineId);
     final today = dayKey(DateTime.now());
+    final sorted = routine.completions.toList()..sort();
+    routine.lastCompletedKey = sorted.isEmpty ? null : sorted.last;
     if (routine.doneOn(today)) {
       routine.completions.remove(today);
       if (routine.lastCompletedKey == today) {

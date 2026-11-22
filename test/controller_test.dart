@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:momo/core/format.dart';
 import 'package:momo/engine/happiness.dart';
+import 'package:momo/engine/routines.dart';
 import 'package:momo/services/storage_service.dart';
 import 'package:momo/state/momo_controller.dart';
 import 'package:momo/state/momo_state.dart';
@@ -117,6 +118,91 @@ void main() {
         dayKey(DateTime.now().subtract(const Duration(days: 1))),
       );
     });
+
+    test(
+      'legacy stale last-completed day: ON then OFF returns the streak '
+      'to exactly 4',
+      () async {
+        // State as persisted by the pre-fix build: the old undo removed
+        // today's completion but left the incremented streak and a
+        // last-completed day of today. Reproduced through the real
+        // storage round-trip, as the live site loads it — the seeded
+        // Evening walk starts at 3, the earlier session left it at 4.
+        final store = StorageService(MemoryStore());
+        await MomoController.load(store: store);
+        final doc =
+            jsonDecode(await store.read() ?? '') as Map<String, dynamic>;
+        final routines = doc['routines'] as List<dynamic>;
+        final evening = routines.firstWhere(
+          (r) => (r as Map<String, dynamic>)['name'] == 'Evening walk',
+        ) as Map<String, dynamic>;
+        evening['streakDays'] = 4;
+        evening['lastCompletedKey'] = dayKey(DateTime.now());
+        // Today is already absent from Evening walk's completions (the
+        // seeded miss); the stale last-completed day is the legacy part.
+        expect(
+          (evening['completions'] as List<dynamic>)
+              .contains(dayKey(DateTime.now())),
+          isFalse,
+        );
+        await store.write(jsonEncode(doc));
+
+        final legacy = await MomoController.load(store: store);
+        final routine = legacy.state.routines.firstWhere(
+          (r) => r.name == 'Evening walk',
+        );
+        expect(routine.streakDays, 4);
+        expect(legacy.routinesDoneTodayCount, 5);
+
+        await legacy.toggleRoutineDone(routine.id);
+        expect(routine.streakDays, 5);
+        expect(legacy.routinesDoneTodayCount, 6);
+        await legacy.toggleRoutineDone(routine.id);
+        expect(routine.streakDays, 4);
+        expect(legacy.routinesDoneTodayCount, 5);
+        expect(
+          routine.lastCompletedKey,
+          dayKey(DateTime.now().subtract(const Duration(days: 1))),
+        );
+
+        // And it persists: a reload still shows 4, not 3.
+        final reloaded = await MomoController.load(store: store);
+        final reloadedEvening = reloaded.state.routines.firstWhere(
+          (r) => r.name == 'Evening walk',
+        );
+        expect(reloadedEvening.streakDays, 4);
+      },
+    );
+
+    test(
+      'paused streak: ON resumes from the frozen value, OFF returns '
+      'to it',
+      () async {
+        // Last completed 5 days ago: the streak is paused at 7, never
+        // zeroed by the miss. Completing today grows it by one; undoing
+        // returns it to exactly 7.
+        final fiveDaysAgo = dayKey(
+          DateTime.now().subtract(const Duration(days: 5)),
+        );
+        controller.state.routines.add(
+          Routine(
+            id: 'routine-paused',
+            name: 'Paused test',
+            timeLabel: '6:00 PM',
+            completions: {fiveDaysAgo},
+            streakDays: 7,
+            lastCompletedKey: fiveDaysAgo,
+          ),
+        );
+        final routine = controller.state.routines.last;
+        await controller.toggleRoutineDone(routine.id);
+        expect(routine.streakDays, 8);
+        expect(routine.lastCompletedKey, dayKey(DateTime.now()));
+        await controller.toggleRoutineDone(routine.id);
+        expect(routine.streakDays, 7);
+        expect(routine.lastCompletedKey, fiveDaysAgo);
+      },
+    );
 
     test('logging an expense moves spent and the budget score', () async {
       final before = controller.spentCents;
